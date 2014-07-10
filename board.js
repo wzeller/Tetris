@@ -426,17 +426,33 @@
     return false;
   };
 
-  Array.prototype.remove = function(from, to) {
-    var rest = this.slice((to || from) + 1 || this.length);
-    this.length = from < 0 ? this.length + from : from;
-    return this.push.apply(this, rest);
+  // Array.prototype.remove = function(from, to) {
+  //   var rest = this.slice((to || from) + 1 || this.length);
+  //   this.length = from < 0 ? this.length + from : from;
+  //   return this.push.apply(this, rest);
+  // };
+
+  Game.prototype.isSquare = function(xpos, ypos){
+    var isPiece = false;
+    if (ypos >= 650){
+      return true
+    }
+    this.pieces.forEach(function(piece){
+      piece.squares.forEach(function(square){
+        if(xpos == square.xpos && ypos == square.ypos){
+          isPiece = true;
+        }
+      })
+    })
+    return isPiece;
   };
 
   Game.prototype.checkForRows = function(){
     var pieces = this.pieces;
     var rowHash = {};
-    var total = 0
-    
+    var total = 0;
+    var game = this;
+
     //set up blank hash for each row
     for (i = 620; i > 50; i -= 30){
       rowHash[i] = 0;
@@ -466,17 +482,21 @@
         //every row that is removed above causes all squares above it to move down one
         pieces.forEach(function(piece){
           piece.squares.forEach(function(square){
-            if (square.ypos < key){
-              square.ypos += 30
+
+            if (square.ypos < key && piece !== fallingPiece){
+              // console.log(game.isSquare(square.xpos, square.ypos+30))
+              // while (game.isSquare(square.xpos, square.ypos+30) == false){
+                square.ypos += 30
+              // }
             }
           })
         })
+
       }
 
     })
     
-  }
-
+  };
   
 
   Game.prototype.start = function(canvasEl) {
