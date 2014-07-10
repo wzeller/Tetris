@@ -385,19 +385,34 @@
     if (this == otherPiece){
       return false 
     }
+    var collision = true 
 
-    for (i = 0; i < length; i++){
-      for (j = 0; j < otherLength; j++){
-        if (this.squares[i].isCollided(otherPiece.squares[j])){
-          otherPiece.squares.forEach(function(square){
-            square.ypos -= 30;
-          })
-          this.direction = "still";
-          otherPiece.direction = "still";
-          return true
+    while (collision == true){
+      collision = false 
+      for (i = 0; i < length; i++){
+        for (j = 0; j < otherLength; j++){
+          if (this.squares[i].isCollided(otherPiece.squares[j])){
+            otherPiece.squares.forEach(function(square){
+              square.ypos -= 30;
+            })
+            if (this.direction == "right"){
+              otherPiece.squares.forEach(function(square){
+              square.xpos -= 30;
+            })}
+            if (this.direction == "left"){
+              otherPiece.squares.forEach(function(square){
+              square.xpos += 30;
+            })}
+           
+            collision = true;
+            var collided = true;
+          }
         }
-      }
+       }
     } 
+      if (collided == true){
+        return true
+      }
       return false 
   };
 
@@ -410,7 +425,60 @@
       }
     return false;
   };
+
+  Array.prototype.remove = function(from, to) {
+    var rest = this.slice((to || from) + 1 || this.length);
+    this.length = from < 0 ? this.length + from : from;
+    return this.push.apply(this, rest);
+  };
+
+  Game.prototype.checkForRows = function(){
+    var pieces = this.pieces;
+    var rowHash = {};
+    var total = 0
+    
+    //set up blank hash for each row
+    for (i = 620; i > 50; i -= 30){
+      rowHash[i] = 0;
+    }
+    
+    //count squares in each row and hash total
+    pieces.forEach(function(piece){
+      piece.squares.forEach(function(square){
+        if (square.ypos > 50){
+          rowHash[square.ypos] = rowHash[square.ypos] + 1 
+        }
+      })
+    })
+
+    //remove all rows with 10 elements in it
+    Object.keys(rowHash).forEach(function(key){
+      if (rowHash[key] == 10){
+         pieces.forEach(function(piece){
+          for (i = 0; i <= 4; i++){
+            if (piece.squares[i] && piece.squares[i].ypos == key){
+              piece.squares.remove(i)
+              i -= 1
+            }
+          }
+        })
+
+        //every row that is removed above causes all squares above it to move down one
+        pieces.forEach(function(piece){
+          piece.squares.forEach(function(square){
+            if (square.ypos < key){
+              square.ypos += 30
+            }
+          })
+        })
+      }
+
+    })
+    
+  }
+
   
+
   Game.prototype.start = function(canvasEl) {
 
     var ctx = canvasEl.getContext("2d");
@@ -455,20 +523,25 @@
       $(document).keyup(function(e) {
         $(document).bind("keydown")
       });
-
+      
       board.render(ctx);
-      var moving = false;
+      // var moving = false;
       
       game.pieces.forEach(function(piece){
-          if (piece.direction !== "still"){
-            moving = true;
-          }
+          // if (piece.direction !== "still"){
+          //   moving = true;
+          // }
+
+
           piece.render(ctx);
           piece.move(ctx);
 
-          if (piece.isCollided(fallingPiece) || fallingPiece.isOnBottom()){
-            fallingPiece.direction = "still"
-            console.log("collide")
+          if (piece.isCollided(fallingPiece)){
+            if (fallingPiece.direction = "down"){
+              fallingPiece.direction = "still"
+            } else {
+              fallingPiece.direction = "down"
+            }
           }
       })
       
@@ -482,9 +555,11 @@
           clearInterval(gameInterval); //terminates the game by ending setInterval
         }
    
-      if (fallingPiece.isOnBottom() || moving == false){   
+      if (fallingPiece.direction == "still"){   
          fallingPiece = new Tetris.Shape(Shape.randomPiece(), ctx, 400, -40, "down");
          game.pieces.push(fallingPiece);
+         game.checkForRows();
+    
       } //makes new random piece when all pieces are stationary
     }, 200);
   }
