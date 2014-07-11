@@ -447,6 +447,73 @@
     return isPiece;
   };
 
+  Game.prototype.allSquares = function(){
+    var squares = [];
+    this.pieces.forEach(function(piece){
+      piece.squares.forEach(function(square){
+        squares.push(square);
+      })
+    })
+    return squares;
+  };
+
+  Array.prototype.contains = function(k) {
+    for(var i=0; i < this.length; i++){
+      if(this[i] == k){
+        return true;
+      }
+    }
+    return false;
+  };
+
+  Square.prototype.neighbors = function(game, blacklist){
+    var x = this.xpos;
+    var y = this.ypos;
+    //duplicate a two-d array with two arrays, one for x and one for y coords
+    var neighborXCoords = [x+30, x, x-30, x]
+    var neighborYCoords = [y, y+30, y, y-30]
+    var neighbors = []
+    //allows no blacklist; if one is passed, it is of the format [[x1, x2, ... xn], [y1, y2, ... yn]], with
+    //each pair being a coordinate that has already been checked)
+    var blacklist = (blacklist || [[0],[0]])
+    var blacklistXCoords = blacklist[0]
+    var blacklistYCoords = blacklist[1]
+
+    //iterate through all squares; if they are potential neighbors, check against blacklist; if not on it, 
+    //add to neighbors array 
+    game.allSquares().forEach(function(square){
+      var neighborx = square.xpos;
+      var neighbory = square.ypos;
+      var neighborxIndex = neighborXCoords.indexOf(neighborx); 
+      var neighboryIndex = neighborYCoords.indexOf(neighbory); //need both to find pair with duplicate vals
+      if (blacklistXCoords.contains(neighborx)){
+        var blacklistxIndex = blacklistXCoords.indexOf(neighborx)
+      };
+      if (blacklistYCoords.contains(neighbory)){
+        var blacklistyIndex = blacklistYCoords.indexOf(neighbory)
+      };
+
+      //first test if x and y coords are both in potential neighbor coords and then if they have the same
+      //index (need both tests because of duplicates)
+      if (neighborXCoords.contains(neighborx) && neighborYCoords.contains(neighbory) 
+        && ((neighborYCoords[neighborxIndex] == neighbory) || (neighborXCoords[neighboryIndex] == neighborx))){
+    
+        //test if either number is NOT in blacklist or, if both are, they are not the same index
+        if (blacklistXCoords.indexOf(neighborx) == -1 || blacklistYCoords.indexOf(neighbory) == -1 || 
+          ((blacklistYCoords[blacklistxIndex] !== neighbory) && (blacklistXCoords[blacklistyIndex] !== neighborx))){
+            neighbors.push(square)
+          }
+        }
+    })
+    return neighbors;
+  };
+
+  Array.prototype.remove = function(from, to) {
+    var rest = this.slice((to || from) + 1 || this.length);
+    this.length = from < 0 ? this.length + from : from;
+    return this.push.apply(this, rest);
+  };
+
   Game.prototype.checkForRows = function(){
     var pieces = this.pieces;
     var rowHash = {};
