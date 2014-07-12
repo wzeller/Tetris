@@ -233,6 +233,7 @@
     return squares;
   };
 
+  //handles adjustments when collided with the wall
   Shape.prototype.moveOver = function(){
     var min = 250;
     var max = 520;
@@ -342,34 +343,14 @@
     var px = pivot.xpos;
     var py = pivot.ypos;
     this.squares.forEach(function(square){
-      if (square == pivot){
-        console.log("pivot")
-      } else {
-      var x1 = square.xpos
-      var y1 = square.ypos
-      square.ypos = (x1 + py - px);
-      square.xpos = (px + py - y1);
+      if (square != pivot){
+        var x1 = square.xpos
+        var y1 = square.ypos
+        square.ypos = (x1 + py - px);
+        square.xpos = (px + py - y1);
       }
     })
   };
-
-  // Shape.prototype.minusRow = function() {
-  //   this.direction = "down";
-  //   var bottom = this.bottom();
-  //   var length = this.squares.length; 
-  //   if (length == 0){
-  //     return null;
-  //   }
-  //   for(i=length-1; i >= 0; i--){
-  //     if (length == 0){
-  //       return null;
-  //     }
-  //     if (this.squares[i].ypos >= bottom){
-  //       this.squares.splice(i,1)
-  //       length -= 1
-  //     }
-  //   }
-  // };
 
   Square.prototype.isCollided = function(otherSquare){
     if (this.xpos == otherSquare.xpos && this.ypos == otherSquare.ypos){
@@ -408,12 +389,14 @@
             var collided = true;
           }
         }
-       }
-    } 
-      if (collided == true){
-        return true
       }
-      return false 
+    }
+
+    if (collided == true){
+      return true
+    }
+    
+    return false 
   };
 
   Shape.prototype.isOnBottom = function(){
@@ -425,12 +408,6 @@
       }
     return false;
   };
-
-  // Array.prototype.remove = function(from, to) {
-  //   var rest = this.slice((to || from) + 1 || this.length);
-  //   this.length = from < 0 ? this.length + from : from;
-  //   return this.push.apply(this, rest);
-  // };
 
   Game.prototype.isSquare = function(xpos, ypos){
     var isPiece = false;
@@ -473,86 +450,58 @@
     var neighborXCoords = [x+30, x, x-30, x]
     var neighborYCoords = [y, y+30, y, y-30]
     var neighbors = []
-    //allows no blacklist; if one is passed, it is of the format [[x1, x2, ... xn], [y1, y2, ... yn]], with
-    //each pair being a coordinate that has already been checked)
-    // var blacklist = (blacklist || [[0],[0]])
-    // var blacklistXCoords = blacklist[0]
-    // var blacklistYCoords = blacklist[1]
-
-    //iterate through all squares; if they are potential neighbors, check against blacklist; if not on it, 
-    //add to neighbors array 
+  
+    //iterate through all squares; if they are potential neighbors, add to neighbors array 
     game.allSquares().forEach(function(square){
       var neighborx = square.xpos;
       var neighbory = square.ypos;
       var neighborxIndex = neighborXCoords.indexOf(neighborx); 
       var neighboryIndex = neighborYCoords.indexOf(neighbory); //need both to find pair with duplicate vals
-      // if (blacklistXCoords.contains(neighborx)){
-      //   var blacklistxIndex = blacklistXCoords.indexOf(neighborx)
-      // };
-      // if (blacklistYCoords.contains(neighbory)){
-      //   var blacklistyIndex = blacklistYCoords.indexOf(neighbory)
-      // };
-
-      //first test if x and y coords are both in potential neighbor coords and then if they have the same
-      //index (need both tests because of duplicates)
+    //final test is for duplicate entries
       if (neighborXCoords.contains(neighborx) && neighborYCoords.contains(neighbory) 
         && ((neighborYCoords[neighborxIndex] == neighbory) || (neighborXCoords[neighboryIndex] == neighborx))){
-    
-        // //test if either number is NOT in blacklist or, if both are, they are not the same index
-        // if (blacklistXCoords.indexOf(neighborx) == -1 || blacklistYCoords.indexOf(neighbory) == -1 || 
-        //   ((blacklistYCoords[blacklistxIndex] !== neighbory) && (blacklistXCoords[blacklistyIndex] !== neighborx))){
-            neighbors.push(square)
-          // }
+          neighbors.push(square)
         }
     })
     return neighbors;
   };
   
+  //This function takes a square and returns true if it is an "island" -- i.e., part of a structure that is 
+  //not connected on any side -- and false if it is not (i.e., it is part of a group of squares that connect
+  //to the bottom).  This function is performed using DFS.
   Square.prototype.isIsland = function(game){
     var group = [];
     group.push(this);
-    // var xblacklist = [this.xpos];
-    // var yblacklist = [this.ypos];
+    //encode each x and y coord to a unique value to store in blacklist and avoid repeating
     var blacklist = [this.xpos * 1000 + this.ypos]
+
     while (group.length > 0){
+      //depth-first search is slightly faster than breadth-first because we are testing for connection with bottom
       var last = group.pop();
       if (last.ypos == 620){
         return false
       }
+      //get all neighbors from top square in the stack
       var neighbors = last.neighbors(game);
-
-      // if (neighbors.length == 0){
-      //   group.pop()
-      // } else {
-      // var newNeighbors = 0;
       var end = false; 
+      //check against blacklist; if not on it, add to it and to stack of squares; if on it, do not; if
+      //square touches bottom, change flag (end) to true, which will return false after loop is over
       neighbors.forEach(function(square){
-        // var xBlacklistIndex = xblacklist.indexOf(square.xpos)
-        // var yBlacklistIndex = yblacklist.indexOf(square.ypos)
         var index = square.xpos * 1000 + square.ypos 
-
         if (square.ypos == 620){
           end = true;
         }
-        //checks to make sure the pairing of square.xpos, square.ypos is not in blacklist before adding to group
-        // debugger;
-        if (blacklist.indexOf(index) == -1){
-        
+        if (blacklist.indexOf(index) == -1){ //when blacklist.indexOf(index) == -1, square is not in it
           blacklist.push(index);
           group.push(square);
-          // newNeighbors += 1;
         }
       })
-      // if (neighbors.length == 0){
-      //   group.pop()
-      // }
-
+      
+      //flag needed because forEach cannot be returned from
       if (end == true){
         return false
       }
-        console.log(group.length)
     }
-    
     return true
   };
 
@@ -562,14 +511,13 @@
     return this.push.apply(this, rest);
   };
 
-  Game.prototype.checkForRows = function(islands){
+  Game.prototype.checkForRows = function(){
     var pieces = this.pieces;
     var rowHash = {};
     var total = 0;
     var game = this;
     var isolatedPiecesArray = [];
     var isolatedPieces = true;
-    var islands = (islands || []);
     var squares = game.allSquares();
 
     //set up blank hash for each row
@@ -578,18 +526,18 @@
     };
     
     //count squares in each row and hash total
-    // pieces.forEach(function(piece){
     squares.forEach(function(square){
       if (square.ypos > 50){
         rowHash[square.ypos] = rowHash[square.ypos] + 1 
       }
     });
-    // })
 
     //remove all rows with 10 elements in it
     Object.keys(rowHash).forEach(function(key){
+
       if (rowHash[key] == 10){
-         pieces.forEach(function(piece){
+        //first, remove all squares in that row
+        pieces.forEach(function(piece){
           for (i = 0; i <= 4; i++){
             if (piece.squares[i] && piece.squares[i].ypos == key){
               piece.squares.remove(i)
@@ -599,109 +547,56 @@
         })
 
         //every row that is removed above causes all squares above it to move down one
-        // var isolatedPieces = true;
         squares.forEach(function(square){
           if (square.ypos < key){
             square.ypos += 30
           }
         })
         
-        var floaters = true;
+        //see whether any squares are on "islands" and, if so: group into separate islands,
+        //move each island down till it's either collided with another piece or touching
+        //the ground, and after all islands are settled, check again for rows to remove.
+        var islands = [];
+        var floaters = false;//flag to tell whether there are any islands
+        var fallingPieces = game.pieces;
 
-        // debugger;
-        // while (floaters == true){
-          
-          // while (floaters == true){
-            var islands = [];
-            floaters = false
-            var fallingPieces = game.pieces;
-            fallingPieces.forEach(function(piece){
-              piece.squares.forEach(function(square){
-                if (square.ypos <= key && piece !== fallingPiece){ 
-                  
+        //test each square for whether it's on an island (and not the falling piece)
+        fallingPieces.forEach(function(piece){
+          piece.squares.forEach(function(square){
+            if (square.ypos <= key && piece !== fallingPiece){ 
+              if(square.isIsland(game)){
+                islands.push(square)
+                floaters = true;
+              }
+            }
+          })
+        })
+        
+        //if there are islands, continue moving each down by 30 until 
+        if (floaters == true){
+          var collided = false; //flag to continue until island comes to rest
+          while (collided == false){
+            //move entire island first
+            islands.forEach(function(square){
+              square.ypos += 30;
+            })
             
-                    if(square.isIsland(game)){
-                      // console.log(fallingPiece)
-  
-                      // console.log("dropper")
-                      // console.log(piece)
-                      islands.push(square)
-                      // fallingPieces.remove(square)
-                      // square.ypos += 30;
-                      floaters = true;
-                    }
-                  }
-                  // game.checkForRows();
-                })
-              })
-              console.log(islands);
-              if (floaters == true){
-                var collided = false;
-                while (collided == false){
-                  islands.forEach(function(square){
-                    square.ypos += 30;
-                    console.log(square)
-                    //continue falling until isCollided with other square then clear from islands
-                  })
-
-                  islands.forEach(function(square){
-                    game.allSquares().forEach(function(othersquare){
-                      if (square.isCollided(othersquare) || square.ypos == 620){
-                        collided = true;
-                        
-                      }
-                    })
-                  })
+            //then check if collided or at the bottom
+            islands.forEach(function(square){
+              game.allSquares().forEach(function(othersquare){
+                if (square.isCollided(othersquare) || square.ypos == 620){
+                  collided = true;
                 }
-
-                // debugger
-                game.checkForRows();
-                //need to clear board if falling piece completes row; how to wait?
-               
-                  
-                
-             }
-          
-
-
-      //   while (isolatedPieces){
-
-      //     isolatedPieces = false;
-      //     game.allSquares().forEach(function(square){
-      //         if (square.isIsland(game) && square.ypos > 70){
-      //           debugger
-      //           console.log("in")
-      //           console.log(square)
-      //           console.log(key)
-      //           console.log(square.isIsland(game));
-      //           isolatedPieces = true;
-               
-      //           isolatedPiecesArray.push(square);
-      //           console.log(square) 
-      //         } else {
-      //         if (square.ypos < key && piece !== fallingPiece){
-      //           console.log(game.isSquare(square.xpos, square.ypos+30))
-      //           while (game.isSquare(square.xpos, square.ypos+30) == false){
-      //             square.ypos += 30
-      //           }
-      //         }
-      //         console.log("out")
-      //         console.log(square)
-      //         }
-      //     })
-      //   }
-      //   isolatedPiecesArray.forEach(function(square){
-      //     square.ypos += 30;
-      //   })
-      //   console.log(isolatedPiecesArray);
-      //   isolatedPiecesArray = [];
+              })
+            })
+          }
+          //after island has come to rest, recursivelycheck for rows again to remove new rows
+          game.checkForRows();
+        }
       }
-
     })
-    
   };
   
-
   Game.prototype.start = function(canvasEl) {
 
     var ctx = canvasEl.getContext("2d");
@@ -712,7 +607,7 @@
     game.pieces.push(fallingPiece);
    
     var gameInterval = window.setInterval(function () {
-
+  
       $(document).keydown(function(e){ 
 
           switch(e.which) {
@@ -748,41 +643,31 @@
       });
       
       board.render(ctx);
-      // var moving = false;
-      
+
+      //move and render all pieces
       game.pieces.forEach(function(piece){
-          // if (piece.direction !== "still"){
-          //   moving = true;
-          // }
-
-
-          piece.render(ctx);
-          piece.move(ctx);
-
-          if (piece.isCollided(fallingPiece)){
-            if (fallingPiece.direction = "down"){
-              fallingPiece.direction = "still"
-            } else {
-              fallingPiece.direction = "down"
-            }
+        piece.render(ctx);
+        piece.move(ctx);
+        if (piece.isCollided(fallingPiece)){
+          if (fallingPiece.direction = "down"){
+            fallingPiece.direction = "still"
+          } else {
+            fallingPiece.direction = "down"
           }
+        }
       })
       
-      // game.pieces.forEach(function(piece){
-      
-      // })
-
-      if (fallingPiece.direction == "still" && fallingPiece.top() <= 0)
-        {
+      if (fallingPiece.direction == "still" && fallingPiece.top() <= 0){
           console.log("you lose")
           clearInterval(gameInterval); //terminates the game by ending setInterval
-        }
+      }
    
+      //makes new random piece when all pieces are stationary and checks for complete rows
       if (fallingPiece.direction == "still"){   
          fallingPiece = new Tetris.Shape(Shape.randomPiece(), ctx, 400, -40, "down");
          game.pieces.push(fallingPiece);
          game.checkForRows();
-      } //makes new random piece when all pieces are stationary
+      } 
     }, 200);
   }
 
