@@ -515,7 +515,7 @@
     // var yblacklist = [this.ypos];
     var blacklist = [this.xpos * 1000 + this.ypos]
     while (group.length > 0){
-      var last = group.shift();
+      var last = group.pop();
       if (last.ypos == 620){
         return false
       }
