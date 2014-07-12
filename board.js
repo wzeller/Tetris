@@ -611,10 +611,11 @@
         // debugger;
         // while (floaters == true){
           
-          while (floaters == true){
+          // while (floaters == true){
             var islands = [];
             floaters = false
-            game.pieces.forEach(function(piece){
+            var fallingPieces = game.pieces;
+            fallingPieces.forEach(function(piece){
               piece.squares.forEach(function(square){
                 if (square.ypos <= key && piece !== fallingPiece){ 
                   
@@ -625,6 +626,7 @@
                       // console.log("dropper")
                       // console.log(piece)
                       islands.push(square)
+                      // fallingPieces.remove(square)
                       // square.ypos += 30;
                       floaters = true;
                     }
@@ -634,12 +636,31 @@
               })
               console.log(islands);
               if (floaters == true){
-                islands.forEach(function(square){
-                  square.ypos += 30;
-                })
-              }
+                var collided = false;
+                while (collided == false){
+                  islands.forEach(function(square){
+                    square.ypos += 30;
+                    console.log(square)
+                    //continue falling until isCollided with other square then clear from islands
+                  })
+
+                  islands.forEach(function(square){
+                    game.allSquares().forEach(function(othersquare){
+                      if (square.isCollided(otherSquare)){
+                        collided = true;
+                        debugger
+                        game.checkForRows();
+                      }
+                    })
+                  })
+                }
+                //need to clear board if falling piece completes row; how to wait?
+               
+                  
+                
              }
           
+
 
       //   while (isolatedPieces){
 
