@@ -509,7 +509,6 @@
   };
   
   Square.prototype.isIsland = function(game){
-    // debugger;
     var group = [];
     group.push(this);
     // var xblacklist = [this.xpos];
@@ -563,13 +562,14 @@
     return this.push.apply(this, rest);
   };
 
-  Game.prototype.checkForRows = function(){
+  Game.prototype.checkForRows = function(islands){
     var pieces = this.pieces;
     var rowHash = {};
     var total = 0;
     var game = this;
     var isolatedPiecesArray = [];
     var isolatedPieces = true;
+    var islands = (islands || []);
     var squares = game.allSquares();
 
     //set up blank hash for each row
@@ -622,7 +622,7 @@
             
                     if(square.isIsland(game)){
                       // console.log(fallingPiece)
-                      // // debugger;
+  
                       // console.log("dropper")
                       // console.log(piece)
                       islands.push(square)
@@ -646,14 +646,16 @@
 
                   islands.forEach(function(square){
                     game.allSquares().forEach(function(othersquare){
-                      if (square.isCollided(otherSquare)){
+                      if (square.isCollided(othersquare) || square.ypos == 620){
                         collided = true;
-                        debugger
-                        game.checkForRows();
+                        
                       }
                     })
                   })
                 }
+
+                // debugger
+                game.checkForRows();
                 //need to clear board if falling piece completes row; how to wait?
                
                   
@@ -780,7 +782,6 @@
          fallingPiece = new Tetris.Shape(Shape.randomPiece(), ctx, 400, -40, "down");
          game.pieces.push(fallingPiece);
          game.checkForRows();
-    
       } //makes new random piece when all pieces are stationary
     }, 200);
   }
