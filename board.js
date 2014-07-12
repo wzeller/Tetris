@@ -466,7 +466,7 @@
     return false;
   };
 
-  Square.prototype.neighbors = function(game, blacklist){
+  Square.prototype.neighbors = function(game){
     var x = this.xpos;
     var y = this.ypos;
     //duplicate a two-d array with two arrays, one for x and one for y coords
@@ -475,9 +475,9 @@
     var neighbors = []
     //allows no blacklist; if one is passed, it is of the format [[x1, x2, ... xn], [y1, y2, ... yn]], with
     //each pair being a coordinate that has already been checked)
-    var blacklist = (blacklist || [[0],[0]])
-    var blacklistXCoords = blacklist[0]
-    var blacklistYCoords = blacklist[1]
+    // var blacklist = (blacklist || [[0],[0]])
+    // var blacklistXCoords = blacklist[0]
+    // var blacklistYCoords = blacklist[1]
 
     //iterate through all squares; if they are potential neighbors, check against blacklist; if not on it, 
     //add to neighbors array 
@@ -486,26 +486,75 @@
       var neighbory = square.ypos;
       var neighborxIndex = neighborXCoords.indexOf(neighborx); 
       var neighboryIndex = neighborYCoords.indexOf(neighbory); //need both to find pair with duplicate vals
-      if (blacklistXCoords.contains(neighborx)){
-        var blacklistxIndex = blacklistXCoords.indexOf(neighborx)
-      };
-      if (blacklistYCoords.contains(neighbory)){
-        var blacklistyIndex = blacklistYCoords.indexOf(neighbory)
-      };
+      // if (blacklistXCoords.contains(neighborx)){
+      //   var blacklistxIndex = blacklistXCoords.indexOf(neighborx)
+      // };
+      // if (blacklistYCoords.contains(neighbory)){
+      //   var blacklistyIndex = blacklistYCoords.indexOf(neighbory)
+      // };
 
       //first test if x and y coords are both in potential neighbor coords and then if they have the same
       //index (need both tests because of duplicates)
       if (neighborXCoords.contains(neighborx) && neighborYCoords.contains(neighbory) 
         && ((neighborYCoords[neighborxIndex] == neighbory) || (neighborXCoords[neighboryIndex] == neighborx))){
     
-        //test if either number is NOT in blacklist or, if both are, they are not the same index
-        if (blacklistXCoords.indexOf(neighborx) == -1 || blacklistYCoords.indexOf(neighbory) == -1 || 
-          ((blacklistYCoords[blacklistxIndex] !== neighbory) && (blacklistXCoords[blacklistyIndex] !== neighborx))){
+        // //test if either number is NOT in blacklist or, if both are, they are not the same index
+        // if (blacklistXCoords.indexOf(neighborx) == -1 || blacklistYCoords.indexOf(neighbory) == -1 || 
+        //   ((blacklistYCoords[blacklistxIndex] !== neighbory) && (blacklistXCoords[blacklistyIndex] !== neighborx))){
             neighbors.push(square)
-          }
+          // }
         }
     })
     return neighbors;
+  };
+  
+  Square.prototype.isIsland = function(game){
+    // debugger;
+    var group = [];
+    group.push(this);
+    // var xblacklist = [this.xpos];
+    // var yblacklist = [this.ypos];
+    var blacklist = [this.xpos * 1000 + this.ypos]
+    while (group.length > 0){
+      var last = group.shift();
+      if (last.ypos == 620){
+        return false
+      }
+      var neighbors = last.neighbors(game);
+
+      // if (neighbors.length == 0){
+      //   group.pop()
+      // } else {
+      // var newNeighbors = 0;
+      var end = false; 
+      neighbors.forEach(function(square){
+        // var xBlacklistIndex = xblacklist.indexOf(square.xpos)
+        // var yBlacklistIndex = yblacklist.indexOf(square.ypos)
+        var index = square.xpos * 1000 + square.ypos 
+
+        if (square.ypos == 620){
+          end = true;
+        }
+        //checks to make sure the pairing of square.xpos, square.ypos is not in blacklist before adding to group
+        // debugger;
+        if (blacklist.indexOf(index) == -1){
+        
+          blacklist.push(index);
+          group.push(square);
+          // newNeighbors += 1;
+        }
+      })
+      // if (neighbors.length == 0){
+      //   group.pop()
+      // }
+
+      if (end == true){
+        return false
+      }
+        console.log(group.length)
+    }
+    
+    return true
   };
 
   Array.prototype.remove = function(from, to) {
@@ -519,20 +568,23 @@
     var rowHash = {};
     var total = 0;
     var game = this;
+    var isolatedPiecesArray = [];
+    var isolatedPieces = true;
+    var squares = game.allSquares();
 
     //set up blank hash for each row
     for (i = 620; i > 50; i -= 30){
       rowHash[i] = 0;
-    }
+    };
     
     //count squares in each row and hash total
-    pieces.forEach(function(piece){
-      piece.squares.forEach(function(square){
-        if (square.ypos > 50){
-          rowHash[square.ypos] = rowHash[square.ypos] + 1 
-        }
-      })
-    })
+    // pieces.forEach(function(piece){
+    squares.forEach(function(square){
+      if (square.ypos > 50){
+        rowHash[square.ypos] = rowHash[square.ypos] + 1 
+      }
+    });
+    // })
 
     //remove all rows with 10 elements in it
     Object.keys(rowHash).forEach(function(key){
@@ -547,18 +599,79 @@
         })
 
         //every row that is removed above causes all squares above it to move down one
-        pieces.forEach(function(piece){
-          piece.squares.forEach(function(square){
-
-            if (square.ypos < key && piece !== fallingPiece){
-              // console.log(game.isSquare(square.xpos, square.ypos+30))
-              // while (game.isSquare(square.xpos, square.ypos+30) == false){
-                square.ypos += 30
-              // }
-            }
-          })
+        // var isolatedPieces = true;
+        squares.forEach(function(square){
+          if (square.ypos < key){
+            square.ypos += 30
+          }
         })
+        
+        var floaters = true;
 
+        // debugger;
+        // while (floaters == true){
+          
+          while (floaters == true){
+            var islands = [];
+            floaters = false
+            game.pieces.forEach(function(piece){
+              piece.squares.forEach(function(square){
+                if (square.ypos <= key && piece !== fallingPiece){ 
+                  
+            
+                    if(square.isIsland(game)){
+                      // console.log(fallingPiece)
+                      // // debugger;
+                      // console.log("dropper")
+                      // console.log(piece)
+                      islands.push(square)
+                      // square.ypos += 30;
+                      floaters = true;
+                    }
+                  }
+                  // game.checkForRows();
+                })
+              })
+              console.log(islands);
+              if (floaters == true){
+                islands.forEach(function(square){
+                  square.ypos += 30;
+                })
+              }
+             }
+          
+
+      //   while (isolatedPieces){
+
+      //     isolatedPieces = false;
+      //     game.allSquares().forEach(function(square){
+      //         if (square.isIsland(game) && square.ypos > 70){
+      //           debugger
+      //           console.log("in")
+      //           console.log(square)
+      //           console.log(key)
+      //           console.log(square.isIsland(game));
+      //           isolatedPieces = true;
+               
+      //           isolatedPiecesArray.push(square);
+      //           console.log(square) 
+      //         } else {
+      //         if (square.ypos < key && piece !== fallingPiece){
+      //           console.log(game.isSquare(square.xpos, square.ypos+30))
+      //           while (game.isSquare(square.xpos, square.ypos+30) == false){
+      //             square.ypos += 30
+      //           }
+      //         }
+      //         console.log("out")
+      //         console.log(square)
+      //         }
+      //     })
+      //   }
+      //   isolatedPiecesArray.forEach(function(square){
+      //     square.ypos += 30;
+      //   })
+      //   console.log(isolatedPiecesArray);
+      //   isolatedPiecesArray = [];
       }
 
     })
