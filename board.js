@@ -319,6 +319,7 @@
     this.xDim = xDim;
     this.yDim = yDim;
     this.pieces = []
+    this.totalRows = 0;
   };
 
   Shape.prototype.bottom = function() {
@@ -526,6 +527,7 @@
     var isolatedPiecesArray = [];
     var isolatedPieces = true;
     var squares = game.allSquares();
+    var completeRows = 0;
 
     //set up blank hash for each row
     for (i = 620; i > 50; i -= 30){
@@ -543,6 +545,7 @@
     Object.keys(rowHash).forEach(function(key){
 
       if (rowHash[key] == 10){
+        completeRows += 1;
         //first, remove all squares in that row
         pieces.forEach(function(piece){
           for (i = 0; i <= 4; i++){
@@ -606,23 +609,39 @@
         }
       }
     })
+    return completeRows;
   };
 
-  function setDeceleratingTimeout( callback, factor, times )
-  {
-    var internalCallback = function( t, counter )
-    {
-      return function()
-      {
-        if ( --t > 0 )
+  //timer object that allows interval to be changed from within callback function;
+  Game.prototype.setVariableInterval = function(callbackFunc, timing) {
+    var variableInterval = {
+      interval: timing,
+      callback: callbackFunc,
+      stopped: false,
+      runLoop: function() {
+        if (variableInterval.stopped) return;
+        var result = variableInterval.callback.call(variableInterval);
+        if (typeof result == 'number')
         {
-          window.setTimeout( internalCallback, ++counter * factor );
-          callback();
+          if (result === 0) return;
+          variableInterval.interval = result;
         }
+        variableInterval.loop();
+      },
+      stop: function() {
+        this.stopped = true;
+        window.clearTimeout(this.timeout);
+      },
+      start: function() {
+        this.stopped = false;
+        return this.loop();
+      },
+      loop: function() {
+        this.timeout = window.setTimeout(this.runLoop, this.interval);
+        return this;
       }
-    }( times, 0 );
-
-    window.setTimeout( internalCallback, factor );
+    };
+    return variableInterval.start();
   };
 
   
@@ -631,16 +650,19 @@
     var ctx = canvasEl.getContext("2d");
     var game = this;
     var board = new Tetris.Board(250, 50, 600, 300);
+    var totalRows = this.totalRows;
+    var speedUp = 0;
    
     var down = 0
     board.render(ctx);
     fallingPiece = new Tetris.Shape(Shape.randomPiece(), ctx, 400, -40, "down");
     game.pieces.push(fallingPiece);
-    var speed = 200;
-   
-    var gameInterval = window.setInterval(function () {
-     console.log(speed)
-     speed += 100
+    
+    var gameInterval = this.setVariableInterval(function () {
+     var newRows = 0;
+     var count = 0;
+     var interval = this.interval;
+     console.log(interval)
       $(document).keydown(function(e){ 
 
           switch(e.which) {
@@ -685,16 +707,25 @@
       
       if (fallingPiece.direction == "still" && fallingPiece.top() <= 0){
           console.log("you lose")
-          clearInterval(gameInterval); //terminates the game by ending setInterval
+          gameInterval.stop(); //terminates the game by ending setInterval
       }
-   
+
       //makes new random piece when all pieces are stationary and checks for complete rows
       if (fallingPiece.direction == "still"){   
          fallingPiece = new Tetris.Shape(Shape.randomPiece(), ctx, 400, -40, "down");
+         fallingPiece.speed = "normal";
          game.pieces.push(fallingPiece);
-         game.checkForRows();
+         var turn = game.checkForRows();
+         newRows = newRows + turn;
+         totalRows += newRows;
+         if (totalRows % 10 == 0 && totalRows != 0 && newRows != 0){
+          interval -= 1;
+         }
       } 
-    }, speed);
+      console.log(totalRows)
+      console.log(interval)
+    return interval;
+    }, 100);
   }
 
 })(this);
