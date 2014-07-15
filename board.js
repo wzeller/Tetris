@@ -53,6 +53,7 @@
     this.pivot = this.squares[1];
     this.direction = (direction || "down");
     this.render(ctx);
+    this.speed = "normal";
   };
 
   Shape.prototype.render = function(ctx){
@@ -268,6 +269,9 @@
           this.direction = "still"
           return false 
         }
+      if (this.squares[i].ypos >= 590 && this.speed == "fast"){
+        this.speed = "normal";
+      }
     }
     
     //check if on edges and moving off board
@@ -299,9 +303,17 @@
       }
       if (dir == "down"){
         this.squares[i].ypos += 30
+      }
+
+      if (this.speed == "fast"){
+        this.squares[i].ypos += 30
       } 
     }
+
+    this.speed = "normal";
   }; 
+
+
 
   var Game = Tetris.Game = function(xDim, yDim) {
     this.xDim = xDim;
@@ -329,13 +341,6 @@
       }
     }
     return min;
-  };
-
-  Shape.ORIENTATIONS = {
-    "up" : "right",
-    "right" : "down",
-    "down": "left",
-    "left": "up"
   };
 
   Shape.prototype.flip = function(){
@@ -376,6 +381,7 @@
             otherPiece.squares.forEach(function(square){
               square.ypos -= 30;
             })
+
             if (this.direction == "right"){
               otherPiece.squares.forEach(function(square){
               square.xpos -= 30;
@@ -384,6 +390,7 @@
               otherPiece.squares.forEach(function(square){
               square.xpos += 30;
             })}
+
            
             collision = true;
             var collided = true;
@@ -563,7 +570,8 @@
         //test each square for whether it's on an island (and not the falling piece)
         fallingPieces.forEach(function(piece){
           piece.squares.forEach(function(square){
-            if (square.ypos <= key && piece !== fallingPiece){ 
+            //check all squares for islands?
+            if (piece !== fallingPiece){ 
               if(square.isIsland(game)){
                 islands.push(square)
                 floaters = true;
@@ -584,8 +592,11 @@
             //then check if collided or at the bottom
             islands.forEach(function(square){
               game.allSquares().forEach(function(othersquare){
-                if (square.isCollided(othersquare) || square.ypos == 620){
-                  collided = true;
+                //first make sure that the othersquare is not in the islands
+                if (islands.indexOf(othersquare) == -1){
+                  if (square.isCollided(othersquare) || square.ypos == 620){
+                    collided = true;
+                  }
                 }
               })
             })
@@ -596,18 +607,40 @@
       }
     })
   };
+
+  function setDeceleratingTimeout( callback, factor, times )
+  {
+    var internalCallback = function( t, counter )
+    {
+      return function()
+      {
+        if ( --t > 0 )
+        {
+          window.setTimeout( internalCallback, ++counter * factor );
+          callback();
+        }
+      }
+    }( times, 0 );
+
+    window.setTimeout( internalCallback, factor );
+  };
+
   
   Game.prototype.start = function(canvasEl) {
 
     var ctx = canvasEl.getContext("2d");
     var game = this;
     var board = new Tetris.Board(250, 50, 600, 300);
+   
+    var down = 0
     board.render(ctx);
     fallingPiece = new Tetris.Shape(Shape.randomPiece(), ctx, 400, -40, "down");
     game.pieces.push(fallingPiece);
+    var speed = 200;
    
     var gameInterval = window.setInterval(function () {
-  
+     console.log(speed)
+     speed += 100
       $(document).keydown(function(e){ 
 
           switch(e.which) {
@@ -622,15 +655,12 @@
 
           case 40: // down
           fallingPiece.direction = "down"
+          fallingPiece.speed = "fast"
           break;
-
+     
           case 32: //rotate
           fallingPiece.flip()
           $(document).unbind("keydown") //prevents multiple rotations in single keystroke
-          $(document).keyup(function(e){
-            $(document).keydown(function(e){fallingPiece.flip()}) //rebinds space so it
-                                                                  //works on the next stroke
-          })
           break;
 
           default: return; // exit this handler for other keys
@@ -638,10 +668,6 @@
         e.preventDefault();
       });
 
-      $(document).keyup(function(e) {
-        $(document).bind("keydown")
-      });
-      
       board.render(ctx);
 
       //move and render all pieces
@@ -668,7 +694,7 @@
          game.pieces.push(fallingPiece);
          game.checkForRows();
       } 
-    }, 200);
+    }, speed);
   }
 
 })(this);
