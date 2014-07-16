@@ -8,8 +8,12 @@
     this.width = width;
   };
 
-  Board.prototype.render = function(ctx) {
+  Board.prototype.render = function(ctx, score, level, fallingPieceArray) {
     var board = this;
+    var score = score || 0;
+    var level = level;
+    var nextPieceArray = (fallingPieceArray || []);
+    var nextPiece = nextPieceArray[0]
     ctx.clearRect(0, 0, 800, 800);
     ctx.strokeRect(this.upperLeftx, this.upperLefty, this.height, this.width)
     for (i=50; i < 650; i += 30) {
@@ -22,6 +26,31 @@
        ctx.lineTo(i,650);
        ctx.stroke();
     }
+    ctx.font = "25px Arial"
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    var message = "TETRIS!"
+    ctx.fillText(message, 400, 25)
+    ctx.textAlign = "right";
+    var level = level || 0
+    ctx.fillText("score: " + score, 700, 300)
+    ctx.fillText("level: " + level, 700, 350)
+    ctx.textAlign = "left";
+    ctx.fillText("next piece", 100, 230)
+    // ctx.strokeText("100", 720, 350)
+
+    if (nextPiece != undefined){
+      // debugger
+
+      nextPiece.squares.forEach(function(square){
+        var newxpos = (square.xpos - 250);
+        var newYpos = (square.ypos + 300);
+        var newColor = (square.color);
+        if (newColor == "blue"){newYpos += 30}
+        var newSquare = new Square(newxpos, newYpos, newColor)
+        newSquare.render(ctx)});
+    };
+
   };
 
   var Square = Tetris.Square = function(xpos, ypos, color) {
@@ -71,12 +100,12 @@
   Shape.randomPiece = function(){
     var pieces = ["plus", "line", "square", "rightL", "leftL", "rightZ", "leftZ"]
     return pieces[Math.floor(Math.random() * pieces.length)];;
-  }
+  };
 
   Shape.line = function(x,y,orientation){
     squares = [];
-    var x = x;
-    var y = y;
+    var x = x-30;
+    var y = y-30;
     for(i=0; i<4; i++){
       squares.push(new Tetris.Square(x, y, "blue"))
       if (orientation == "right" || orientation == "left"){
@@ -314,12 +343,12 @@
   }; 
 
 
-
   var Game = Tetris.Game = function(xDim, yDim) {
     this.xDim = xDim;
     this.yDim = yDim;
     this.pieces = []
     this.totalRows = 0;
+    this.level = 1;
   };
 
   Shape.prototype.bottom = function() {
@@ -544,7 +573,7 @@
     //remove all rows with 10 elements in it
     Object.keys(rowHash).forEach(function(key){
 
-      if (rowHash[key] == 10){
+      if (rowHash[key] >= 10){
         completeRows += 1;
         //first, remove all squares in that row
         pieces.forEach(function(piece){
@@ -583,7 +612,7 @@
           })
         })
         
-        //if there are islands, continue moving each down by 30 until 
+        //if there are islands, continue moving each down by 30 until collided or at bottom
         if (floaters == true){
           var collided = false; //flag to continue until island comes to rest
           while (collided == false){
@@ -604,7 +633,7 @@
               })
             })
           }
-          //after island has come to rest, recursivelycheck for rows again to remove new rows
+          //after island has come to rest, recursively check for rows again to remove new rows
           game.checkForRows();
         }
       }
@@ -647,22 +676,26 @@
   
   Game.prototype.start = function(canvasEl) {
 
+    alert("Welcome to Tetris. Use the arrow keys to move around and the space bar to rotate the pieces.  Click ok to play!");
+
     var ctx = canvasEl.getContext("2d");
     var game = this;
     var board = new Tetris.Board(250, 50, 600, 300);
     var totalRows = this.totalRows;
     var speedUp = 0;
+    var level = this.level;
    
     var down = 0
     board.render(ctx);
-    fallingPiece = new Tetris.Shape(Shape.randomPiece(), ctx, 400, -40, "down");
+    fallingPieceArray = [new Tetris.Shape(Shape.randomPiece(), ctx, 400, -40, "down"), new Tetris.Shape(Shape.randomPiece(), ctx, 400, -40, "down")]
+    fallingPiece = fallingPieceArray.pop();
     game.pieces.push(fallingPiece);
     
     var gameInterval = this.setVariableInterval(function () {
      var newRows = 0;
      var count = 0;
      var interval = this.interval;
-     console.log(interval)
+
       $(document).keydown(function(e){ 
 
           switch(e.which) {
@@ -689,8 +722,8 @@
         }
         e.preventDefault();
       });
-
-      board.render(ctx);
+      
+      board.render(ctx, totalRows, game.level, fallingPieceArray);
 
       //move and render all pieces
       game.pieces.forEach(function(piece){
@@ -706,26 +739,36 @@
       })
       
       if (fallingPiece.direction == "still" && fallingPiece.top() <= 0){
-          console.log("you lose")
           gameInterval.stop(); //terminates the game by ending setInterval
+          var answer = confirm("Sorry... You lose.  Play again?")
+          if (answer){
+            window.location.reload();
+          } else {
+            ctx.fillStyle = "black";
+            ctx.textAlign = "center";
+            ctx.font = "bold 38px Helvetica"
+            ctx.fillText("Thanks for playing!", 400, 300)
+          }
+          
       }
 
       //makes new random piece when all pieces are stationary and checks for complete rows
-      if (fallingPiece.direction == "still"){   
-         fallingPiece = new Tetris.Shape(Shape.randomPiece(), ctx, 400, -40, "down");
+      if (fallingPiece.direction == "still"){ 
+         fallingPieceArray.unshift(new Tetris.Shape(Shape.randomPiece(), ctx, 400, -40, "down"))
+         fallingPiece = fallingPieceArray.pop();  
          fallingPiece.speed = "normal";
          game.pieces.push(fallingPiece);
          var turn = game.checkForRows();
          newRows = newRows + turn;
          totalRows += newRows;
-         if (totalRows % 10 == 0 && totalRows != 0 && newRows != 0){
-          interval -= 1;
+         if (totalRows / 10 >= game.level && totalRows != 0 && newRows != 0){
+          game.level += 1;
+          interval *= .9
          }
       } 
-      console.log(totalRows)
-      console.log(interval)
+
     return interval;
-    }, 100);
+    }, 200);
   }
 
 })(this);
