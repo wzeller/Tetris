@@ -21,6 +21,14 @@
     ctx.stroke(); //draw gridlines
   };
 
+  Square.prototype.dup = function(){
+    var newXPos = this.xpos;
+    var newYPos = this.ypos;
+    var newColor = this.color;
+    var newSquare = new Square(newXPos, newYPos, newColor);
+    return newSquare;
+  };
+
   Square.prototype.isCollided = function(otherSquare){
     if (this.xpos == otherSquare.xpos && this.ypos == otherSquare.ypos){
       return true

@@ -11,9 +11,9 @@
 
   Game.prototype.isSquare = function(xpos, ypos){
     var isPiece = false;
-    if (ypos >= 650){
-      return true
-    }
+    // if (ypos >= 650){
+    //   return true
+    // }
     this.pieces.forEach(function(piece){
       piece.squares.forEach(function(square){
         if(xpos == square.xpos && ypos == square.ypos){
@@ -103,7 +103,7 @@
         //test each square for whether it's on an island (and not the falling piece)
         fallingPieces.forEach(function(piece){
           piece.squares.forEach(function(square){
-            //check all squares for islands?
+            //check all squares for islands
             if (piece !== fallingPiece){ 
               if(square.isIsland(game)){
                 islands.push(square)
@@ -181,9 +181,8 @@
 
     var ctx = canvasEl.getContext("2d");
     var game = this;
-    var board = new Tetris.Board(250, 50, 600, 300);
+    var board = new Tetris.Board(250, 50, 600, 300, game);
     var totalRows = this.totalRows;
-    var speedUp = 0;
     var level = this.level;
     var tempScrollTop = $(window).scrollTop();
    
@@ -226,7 +225,7 @@
         e.preventDefault();
       });
       
-      board.render(ctx, totalRows, game.level, fallingPieceArray);
+      board.render(ctx, totalRows, game.level, fallingPieceArray[0]);
 
       //move and render all pieces
       game.pieces.forEach(function(piece){
