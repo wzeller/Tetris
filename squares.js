@@ -36,22 +36,29 @@
       return false 
     }
   };
-
+  
+  //returns an array of all squares adjacent to a given square
   Square.prototype.neighbors = function(game){
     var x = this.xpos;
     var y = this.ypos;
-    //duplicate a two-d array with two arrays, one for x and one for y coords
-    var neighborXCoords = [x+30, x, x-30, x]
-    var neighborYCoords = [y, y+30, y, y-30]
-    var neighbors = []
-  
+    //duplicate a two-d array with two arrays, one for x coords and one for y coords,
+    //of all potential neighbors
+    var neighborXCoords = [x+30, x, x-30, x];
+    var neighborYCoords = [y, y+30, y, y-30];
+    var neighbors = [];
     //iterate through all squares; if they are potential neighbors, add to neighbors array 
     game.allSquares().forEach(function(square){
       var neighborx = square.xpos;
       var neighbory = square.ypos;
       var neighborxIndex = neighborXCoords.indexOf(neighborx); 
-      var neighboryIndex = neighborYCoords.indexOf(neighbory); //need both to find pair with duplicate vals
-    //final test is for duplicate entries
+      var neighboryIndex = neighborYCoords.indexOf(neighbory); 
+    //This is deceptively tricky.  We need both to find pair with duplicate vals, and we need the
+    //final test for duplicate entries. E.g., if pot'l x coords were [1,1,2,3] and y were 
+    //[2,4,5,6] and the square's coords were (1,5), it would falsely be classified as a 
+    //neighbor by merely looking at inclusion in the two arrays.  Moreover, (1,4) would
+    //be falsely EXCLUDED if we only checked whether the two indices were the same becuase
+    //the first 1 is at index 0, and 4 is at index 1.  For this reason we use the last test,
+    //as any pairs would either share one index or the other.
       if (neighborXCoords.contains(neighborx) && neighborYCoords.contains(neighbory) 
         && ((neighborYCoords[neighborxIndex] == neighbory) || (neighborXCoords[neighboryIndex] == neighborx))){
           neighbors.push(square)
@@ -59,7 +66,6 @@
     })
     return neighbors;
   };
-  
   
   //This function takes a square and returns true if it is an "island" -- i.e., part of a structure that is 
   //not connected on any side -- and false if it is not (i.e., it is part of a group of squares that connect
