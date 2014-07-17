@@ -270,7 +270,7 @@
       } 
 
     return interval;
-    }, 200);
+    }, 300);
   }
 
 })(this);
