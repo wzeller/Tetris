@@ -18,7 +18,11 @@
     ctx.lineTo(square.xpos, square.ypos);
     ctx.fillStyle = square.color;
     ctx.fill();
+<<<<<<< HEAD
     ctx.stroke(); //draw gridlines on square
+=======
+    ctx.stroke(); //draw gridlines
+>>>>>>> a6a85cc7b95f76aba1aba332354b566c0e5441b2
   };
 
   Square.prototype.dup = function(){

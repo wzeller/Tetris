@@ -11,6 +11,12 @@
 
   Game.prototype.isSquare = function(xpos, ypos){
     var isPiece = false;
+<<<<<<< HEAD
+=======
+    // if (ypos >= 650){
+    //   return true
+    // }
+>>>>>>> a6a85cc7b95f76aba1aba332354b566c0e5441b2
     this.pieces.forEach(function(piece){
       piece.squares.forEach(function(square){
         if(xpos == square.xpos && ypos == square.ypos){
@@ -189,6 +195,7 @@
     fallingPiece = fallingPieceArray.pop();
     game.pieces.push(fallingPiece);
     
+<<<<<<< HEAD
     window.onkeydown = function (event) {
       if (event.keyCode === 32) {
         event.preventDefault();
@@ -198,6 +205,10 @@
     var gameInterval = this.setVariableInterval(function () {
      // $(window).scrollTop(tempScrollTop); 
 
+=======
+    var gameInterval = this.setVariableInterval(function () {
+     $(window).scrollTop(tempScrollTop); 
+>>>>>>> a6a85cc7b95f76aba1aba332354b566c0e5441b2
      var newRows = 0;
      var count = 0;
      var interval = this.interval;
@@ -274,7 +285,11 @@
       } 
 
     return interval;
+<<<<<<< HEAD
     }, 300);
+=======
+    }, 200);
+>>>>>>> a6a85cc7b95f76aba1aba332354b566c0e5441b2
   }
 
 })(this);
