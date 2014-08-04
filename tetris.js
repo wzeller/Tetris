@@ -11,9 +11,6 @@
 
   Game.prototype.isSquare = function(xpos, ypos){
     var isPiece = false;
-    // if (ypos >= 650){
-    //   return true
-    // }
     this.pieces.forEach(function(piece){
       piece.squares.forEach(function(square){
         if(xpos == square.xpos && ypos == square.ypos){
@@ -192,8 +189,15 @@
     fallingPiece = fallingPieceArray.pop();
     game.pieces.push(fallingPiece);
     
+    window.onkeydown = function (event) {
+      if (event.keyCode === 32) {
+        event.preventDefault();
+      }
+    };
+    
     var gameInterval = this.setVariableInterval(function () {
-     $(window).scrollTop(tempScrollTop); 
+     // $(window).scrollTop(tempScrollTop); 
+
      var newRows = 0;
      var count = 0;
      var interval = this.interval;
