@@ -46,7 +46,7 @@
     return this.push.apply(this, rest);
   };
 
-  Game.prototype.checkForRows = function(){
+  Game.prototype.checkForRows = function(fallingPiece){
     var pieces = this.pieces;
     var rowHash = {};
     var total = 0;
@@ -171,7 +171,41 @@
     return variableInterval.start();
   };
 
-  
+  Game.prototype.setKeyBindings = function(event, fallingPiece) {
+    
+    window.onkeydown = function (event) {
+
+        event.preventDefault();
+
+    };
+
+   $(document).keydown(function(event){ 
+      switch(event.which) {
+
+        case 37: // left
+        fallingPiece.direction = "left"
+        break;
+
+        case 39: // right
+        fallingPiece.direction = "right"
+        break;
+
+        case 40: // down
+        fallingPiece.direction = "down"
+        fallingPiece.speed = "fast"
+        break;
+     
+        case 32: //rotate
+        fallingPiece.flip()
+        $(document).unbind("keydown") //prevents multiple rotations in single keystroke
+        break;
+
+        default: return; // exit this handler for other keys
+      }
+      event.preventDefault();
+    });
+  };
+
   Game.prototype.start = function(canvasEl) {
 
     alert("Welcome to Tetris. Use the arrow keys to move around and the space bar to rotate the pieces.  Click ok to play!");
@@ -179,57 +213,22 @@
     var ctx = canvasEl.getContext("2d");
     var game = this;
     var board = new Tetris.Board(250, 50, 600, 300, game);
-    var totalRows = this.totalRows;
-    var level = this.level;
-    var tempScrollTop = $(window).scrollTop();
-   
-    var down = 0
-    board.render(ctx);
-    fallingPieceArray = [new Tetris.Shape(Tetris.Shape.randomPiece(), ctx, 400, -40, "down"), new Tetris.Shape(Tetris.Shape.randomPiece(), ctx, 400, -40, "down")]
-    fallingPiece = fallingPieceArray.pop();
+    var totalRows = game.totalRows; //completed rows
+    var level = game.level;
+    var down = 0;  
+    var fallingPieceArray = [new Tetris.Shape(Tetris.Shape.randomPiece(), ctx, 400, -40, "down"), new Tetris.Shape(Tetris.Shape.randomPiece(), ctx, 400, -40, "down")]
+    var fallingPiece = fallingPieceArray.pop();
     game.pieces.push(fallingPiece);
-    
-    window.onkeydown = function (event) {
-      if (event.keyCode === 32) {
-        event.preventDefault();
-      }
-    };
-    
-    var gameInterval = this.setVariableInterval(function () {
-     // $(window).scrollTop(tempScrollTop); 
+    board.render(ctx);
 
-     var newRows = 0;
-     var count = 0;
-     var interval = this.interval;
-
-      $(document).keydown(function(e){ 
-
-          switch(e.which) {
-
-          case 37: // left
-          fallingPiece.direction = "left"
-          break;
-
-          case 39: // right
-          fallingPiece.direction = "right"
-          break;
-
-          case 40: // down
-          fallingPiece.direction = "down"
-          fallingPiece.speed = "fast"
-          break;
-     
-          case 32: //rotate
-          fallingPiece.flip()
-          $(document).unbind("keydown") //prevents multiple rotations in single keystroke
-          break;
-
-          default: return; // exit this handler for other keys
-        }
-        e.preventDefault();
-      });
-      
+    //loop that continues until the game is over; setVariableInterval is setInterval with 
+    //the ability to change interval from within, which is used as levels increase
+    var gameInterval = game.setVariableInterval(function () {
+      var newRows = 0;
+      var count = 0;
+      var interval = this.interval;
       board.render(ctx, totalRows, game.level, fallingPieceArray[0]);
+      game.setKeyBindings(event, fallingPiece);
 
       //move and render all pieces
       game.pieces.forEach(function(piece){
@@ -245,7 +244,7 @@
       })
       
       if (fallingPiece.direction == "still" && fallingPiece.top() <= 0){
-          gameInterval.stop(); //terminates the game by ending setInterval
+          gameInterval.stop(); //terminates the game by ending variableInterval
           var answer = confirm("Sorry... You lose.  Play again?")
           if (answer){
             window.location.reload();
@@ -255,16 +254,16 @@
             ctx.font = "bold 38px Helvetica"
             ctx.fillText("Thanks for playing!", 400, 300)
           }
-          
       }
 
       //makes new random piece when all pieces are stationary and checks for complete rows
       if (fallingPiece.direction == "still"){ 
+         $(document).unbind("keydown") //remove keybindings for old fallingpiece
          fallingPieceArray.unshift(new Tetris.Shape(Tetris.Shape.randomPiece(), ctx, 400, -40, "down"))
          fallingPiece = fallingPieceArray.pop();  
          fallingPiece.speed = "normal";
          game.pieces.push(fallingPiece);
-         var turn = game.checkForRows();
+         var turn = game.checkForRows(fallingPiece);
          newRows = newRows + turn;
          totalRows += newRows;
          if (totalRows / 10 >= game.level && totalRows != 0 && newRows != 0){
@@ -274,7 +273,7 @@
       } 
 
     return interval;
-    
+
     }, 300);
 
   }
