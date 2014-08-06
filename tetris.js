@@ -13,7 +13,7 @@
     var isPiece = false;
     this.pieces.forEach(function(piece){
       piece.squares.forEach(function(square){
-        if(xpos == square.xpos && ypos == square.ypos){
+        if (xpos == square.xpos && ypos == square.ypos){
           isPiece = true;
         }
       })
@@ -39,11 +39,10 @@
     }
     return false;
   };
-
+  
   Array.prototype.remove = function(from, to) {
-    var rest = this.slice((to || from) + 1 || this.length);
-    this.length = from < 0 ? this.length + from : from;
-    return this.push.apply(this, rest);
+    this.splice(from, (to || from || 1) + (to < 0 ? this.length + to : 0));
+    return this.length; 
   };
 
   Game.prototype.checkForRows = function(fallingPiece){

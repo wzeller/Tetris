@@ -1,14 +1,14 @@
 (function(root){
   var Tetris = root.Tetris = (root.Tetris || {});
 
-   var Shape = Tetris.Shape = function(type, ctx, x, y, orientation, direction){
+   var Shape = Tetris.Shape = function(type, ctx, x, y){
     this.x = x;
     this.y = y;
     this.type = type;
-    this.orientation = orientation;
-    this.squares = Shape[type](x, y, orientation);
+    this.orientation = "down";
+    this.squares = Shape[type](x, y, this.orientation);
     this.pivot = this.squares[1];
-    this.direction = (direction || "down");
+    this.direction = "down";
     this.render(ctx);
     this.speed = "normal";
   };
@@ -30,56 +30,29 @@
     return pieces[Math.floor(Math.random() * pieces.length)];;
   };
 
-  Shape.line = function(x,y,orientation){
-    squares = [];
-    var x = x-30;
-    var y = y-30;
-    for(i=0; i<4; i++){
-      squares.push(new Tetris.Square(x, y, "blue"))
-      if (orientation == "right" || orientation == "left"){
-        x += 30
-      } else {
-        y += 30
-      };
+  Shape.line = function(x,y){
+    y -= 30;
+    var squares = [];
+    for(var i=0; i<4; i++){
+      squares.push(new Tetris.Square(x, y, "blue"));
+      y += 30;
     };
     return squares;
   };
 
-  Shape.plus = function(x, y, orientation){
-    squares = [];
-    var startx = x;
-    var starty = y;
-    if (orientation == "right" || orientation == "left"){
-      for(i=0; i<3; i++){
-        squares.push(new Tetris.Square(x, y, "red"))
-        y += 30
-      }
-      if (orientation == "right"){
-        squares.push(new Tetris.Square(startx+30, starty+30, "red"))
-      } else {
-        squares.push(new Tetris.Square(startx-30, starty+30, "red"))
-      }
-    } else {
-      y += 30
-      x -= 30
-      for(i=0; i<3; i++){
-        squares.push(new Tetris.Square(x, y, "red"))
-        x += 30
-      }
-      if (orientation == "down"){
-        squares.push(new Tetris.Square(startx, starty+60, "red"))
-      } else {
-        squares.push(new Tetris.Square(startx, starty, "red"))
-      }
+  Shape.plus = function(x, y){
+    var squares = [];
+    for(var i=0; i<3; i++){
+      squares.push(new Tetris.Square(x, y, "red"))
+      x += 30
     }
+    squares.push(new Tetris.Square(x-60, y+30, "red"))
     return squares;
   }
 
   Shape.square = function(x,y){
-    squares = [];
-    var x = x;
-    var y = y;
-    for(i=0; i<2; i++){
+    var squares = [];
+    for(var i=0; i<2; i++){
       squares.push(new Tetris.Square(x, y, "yellow"))
       squares.push(new Tetris.Square(x+30, y, "yellow"))
       y += 30;
@@ -87,107 +60,45 @@
     return squares;
   };
 
-  Shape.rightZ = function(x,y,orientation){
-    squares = [];
-    var x = x;
-    var y = y;
-    if (orientation == "up" || orientation == "down"){
-      for(i=0; i<2; i++){
-        squares.push(new Tetris.Square(x, y, "green"))
-        squares.push(new Tetris.Square(x+30, y, "green"))
-        y += 30;
-        x -= 30;
-      };
-    } else {
-    for(i=0; i<2; i++){
+  Shape.rightZ = function(x,y){
+    var squares = [];
+    for(var i=0; i<2; i++){
+      squares.push(new Tetris.Square(x+30, y, "green"))
       squares.push(new Tetris.Square(x, y, "green"))
-      squares.push(new Tetris.Square(x, y+30, "green"))
+      y += 30;
+      x -= 30;
+    }
+    return squares;
+  };
+
+  Shape.leftZ = function(x,y){
+    var squares = [];
+    for(var i=0; i<2; i++){
+      squares.push(new Tetris.Square(x, y, "pink"))
+      squares.push(new Tetris.Square(x+30, y, "pink"))
       y += 30;
       x += 30;
-    }};
-
-    return squares;
-  };
-
-  Shape.leftZ = function(x,y,orientation){
-    squares = [];
-    var x = x;
-    var y = y;
-    if (orientation == "up" || orientation == "down"){
-      for(i=0; i<2; i++){
-        squares.push(new Tetris.Square(x, y, "pink"))
-        squares.push(new Tetris.Square(x+30, y, "pink"))
-        y += 30;
-        x += 30;
-      };
-    } else {
-    for(i=0; i<2; i++){
-      squares.push(new Tetris.Square(x, y, "pink"))
-      squares.push(new Tetris.Square(x, y+30, "pink"))
-      y -= 30;
-      x += 30;
-    }};
-
-    return squares;
-  };
-
-  Shape.rightL = function(x,y,orientation){
-    squares = [];
-    var startx = x;
-    var starty = y;
-    if (orientation == "right" || orientation == "left"){
-      for(i=0; i<3; i++){
-        squares.push(new Tetris.Square(x, y, "orange"))
-        y += 30
-      }
-      if (orientation == "right"){
-        squares.push(new Tetris.Square(startx+30, starty+60, "orange"))
-      } else {
-        squares.push(new Tetris.Square(startx-30, starty, "orange"))
-      }
-    } else {
-      y += 30
-      x -= 30
-      for(i=0; i<3; i++){
-        squares.push(new Tetris.Square(x, y, "orange"))
-        x += 30
-      }
-      if (orientation == "down"){
-        squares.push(new Tetris.Square(startx-30, starty+60, "orange"))
-      } else {
-        squares.push(new Tetris.Square(startx+30, starty, "orange"))
-      }
     }
+    return squares;
+  };
+
+  Shape.rightL = function(x,y){
+    var squares = [];
+    for(var i=0; i<3; i++){
+      squares.push(new Tetris.Square(x, y, "orange"))
+      x += 30
+    }
+    squares.push(new Tetris.Square(x-90, y+30, "orange"))
     return squares;
   };
 
   Shape.leftL = function(x,y,orientation){
     squares = [];
-    var startx = x;
-    var starty = y;
-    if (orientation == "right" || orientation == "left"){
-      for(i=0; i<3; i++){
-        squares.push(new Tetris.Square(x, y, "purple"))
-        y += 30
-      }
-      if (orientation == "right"){
-        squares.push(new Tetris.Square(startx+30, starty, "purple"))
-      } else {
-        squares.push(new Tetris.Square(startx-30, starty+60, "purple"))
-      }
-    } else {
-      y += 30
-      x -= 30
-      for(i=0; i<3; i++){
-        squares.push(new Tetris.Square(x, y, "purple"))
-        x += 30
-      }
-      if (orientation == "down"){
-        squares.push(new Tetris.Square(startx+30, starty+60, "purple"))
-      } else {
-        squares.push(new Tetris.Square(startx-30, starty, "purple"))
-      }
-    }
+    for(var i=0; i<3; i++){
+      squares.push(new Tetris.Square(x, y, "purple"))
+      x += 30
+    }  
+    squares.push(new Tetris.Square(x-30, y+30, "purple"));
     return squares;
   };
 
@@ -310,18 +221,21 @@
     var length = this.squares.length;
     var otherLength = otherPiece.squares.length;
     if (this == otherPiece){
-      return false 
+      return false; 
     }
-    var collision = true 
+    var collision = true; 
 
     while (collision == true){
       collision = false 
       for (i = 0; i < length; i++){
         for (j = 0; j < otherLength; j++){
           if (this.squares[i].isCollided(otherPiece.squares[j])){
-            otherPiece.squares.forEach(function(square){
-              square.ypos -= 30;
-            })
+            
+         
+              otherPiece.squares.forEach(function(square){
+                square.ypos -= 30;
+              })
+            
 
             if (this.direction == "right"){
               otherPiece.squares.forEach(function(square){
@@ -331,8 +245,6 @@
               otherPiece.squares.forEach(function(square){
               square.xpos += 30;
             })}
-
-           
             collision = true;
             var collided = true;
           }
@@ -343,7 +255,6 @@
     if (collided == true){
       return true
     }
-    
     return false 
   };
 

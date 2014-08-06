@@ -18,20 +18,31 @@
     ctx.lineTo(square.xpos, square.ypos);
     ctx.fillStyle = square.color;
     ctx.fill();
-    ctx.stroke(); //draw gridlines on square
-
+    ctx.stroke(); //draw gridlines on square 
   };
 
   Square.prototype.dup = function(){
     var newXPos = this.xpos;
     var newYPos = this.ypos;
     var newColor = this.color;
-    var newSquare = new Square(newXPos, newYPos, newColor);
-    return newSquare;
+    var dupSquare = new Square(newXPos, newYPos, newColor);
+    return dupSquare;
+  };
+  
+  //Adjustments for displaying next piece
+  Square.prototype.adjustForDisplay = function(board){
+    this.xpos -= board.upperLeftx;
+    this.ypos += board.height/2;
+    if (this.color == "blue"){
+      this.ypos += board.squareWidth;
+    }
+    if (this.color !== "blue" && this.color !== "green") {
+      this.xpos -= board.squareWidth;
+    } 
   };
 
   Square.prototype.isCollided = function(otherSquare){
-    if (this.xpos == otherSquare.xpos && this.ypos == otherSquare.ypos){
+    if (this.xpos == otherSquare.xpos && this.ypos == otherSquare.ypos) {
       return true
     } else {
       return false 
@@ -69,42 +80,37 @@
   };
   
   //This function takes a square and returns true if it is an "island" -- i.e., part of a structure that is 
-  //not connected on any side -- and false if it is not (i.e., it is part of a group of squares that connect
-  //to the bottom).  This function is performed using DFS.
+  //not connected on any side;  
   Square.prototype.isIsland = function(game){
-    var group = [];
-    group.push(this);
+    var group = [this]; //This is a stack to use in DFS
     //encode each x and y coord to a unique value to store in blacklist and avoid repeating
     var blacklist = [this.xpos * 1000 + this.ypos]
-
-    while (group.length > 0){
-      //depth-first search is slightly faster than breadth-first because we are testing for connection with bottom
+    while (group.length > 0) {
       var last = group.pop();
-      if (last.ypos == 620){
-        return false
+      if (last.ypos == 620) { //i.e., on the bottom
+        return false;
       }
-      //get all neighbors from top square in the stack
-      var neighbors = last.neighbors(game);
+      var neighbors = last.neighbors(game);  //get all neighbors from top square in the stack
       var end = false; 
-      //check against blacklist; if not on it, add to it and to stack of squares; if on it, do not; if
+      //check against blacklist; if not on it, add to bl and to stack; if on it, do not; if
       //square touches bottom, change flag (end) to true, which will return false after loop is over
       neighbors.forEach(function(square){
         var index = square.xpos * 1000 + square.ypos 
-        if (square.ypos == 620){
+        if (square.ypos == 620) {
           end = true;
         }
-        if (blacklist.indexOf(index) == -1){ //when blacklist.indexOf(index) == -1, square is not in it
+        if (blacklist.indexOf(index) == -1) { //i.e., square is not in it
           blacklist.push(index);
           group.push(square);
         }
       })
       
       //flag needed because forEach cannot be returned from
-      if (end == true){
-        return false
+      if (end == true) {
+        return false;
       }
     }
-    return true
+    return true;
   };
   
 })(this);
