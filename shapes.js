@@ -102,7 +102,7 @@
     return squares;
   };
 
-  //handles adjustments when collided with the wall
+  //makes adjustments when piece collided with the wall
   Shape.prototype.moveOver = function(){
     var min = 250;
     var max = 520;
@@ -177,29 +177,12 @@
         this.squares[i].ypos += 30
       } 
     }
-
     this.speed = "normal";
   }; 
 
-  Shape.prototype.bottom = function() {
-    var max = this.squares[0].ypos
-    var length = this.squares.length; 
-    for(i=0; i<length; i++){
-      if (this.squares[i].ypos >= max){
-        max = this.squares[i].ypos
-      }
-    }
-    return max;
-  };
-
   Shape.prototype.top = function(){
-    var min = this.squares[0].ypos;
-    var length = this.squares.length; 
-    for(i=0; i<length; i++){
-      if (this.squares[i].ypos <= min){
-        min = this.squares[i].ypos
-      }
-    }
+    var min = 1000; //arbitrary high number
+    this.squares.forEach(function(square){square.ypos < min ? min = square.ypos : 0})
     return min;
   };
 
@@ -209,63 +192,37 @@
     var py = pivot.ypos;
     this.squares.forEach(function(square){
       if (square != pivot){
-        var x1 = square.xpos
-        var y1 = square.ypos
-        square.ypos = (x1 + py - px);
-        square.xpos = (px + py - y1);
+        square.ypos = (square.xpos + py - px);
+        square.xpos = (px + py - square.ypos);
       }
     })
   };
 
   Shape.prototype.isCollided = function(otherPiece){
-    var length = this.squares.length;
-    var otherLength = otherPiece.squares.length;
-    if (this == otherPiece){
+    var thisPiece = this;
+    var collision = true; //flag for loop
+    var collided = false; //flag for return value
+    if (thisPiece == otherPiece){
       return false; 
     }
-    var collision = true; 
-
+    //loop detects whether piece is collided and, if so, moves it up
     while (collision == true){
-      collision = false 
-      for (i = 0; i < length; i++){
-        for (j = 0; j < otherLength; j++){
-          if (this.squares[i].isCollided(otherPiece.squares[j])){
-            
-            // debugger
-              otherPiece.squares.forEach(function(square){
-                square.ypos -= 30;
-              })
-            
-
-            if (this.direction == "right"){
-              otherPiece.squares.forEach(function(square){
-              square.xpos -= 30;
-            })}
-            if (this.direction == "left"){
-              otherPiece.squares.forEach(function(square){
-              square.xpos += 30;
-            })}
+      collision = false
+      otherPiece.squares.forEach(function(square){
+        thisPiece.squares.forEach(function(thisSquare){
+          if (square.isCollided(thisSquare)) {
             collision = true;
-            var collided = true;
+            collided = true; 
+            otherPiece.moveUp();
           }
-        }
-      }
+        })
+      }) 
     }
-
-    if (collided == true){
-      return true
-    }
-    return false 
+    return collided;
   };
 
-  Shape.prototype.isOnBottom = function(){
-    var length = this.squares.length;
-      for (i = 0; i < length; i++){
-        if (this.squares[i].ypos >= 620){
-          return true
-        }
-      }
-    return false;
+  Shape.prototype.moveUp = function(){
+    this.squares.forEach(function(square){square.ypos -= 30})
   };
   
 })(this);

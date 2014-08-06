@@ -171,11 +171,8 @@
   };
 
   Game.prototype.setKeyBindings = function(event, fallingPiece) {
-    
     window.onkeydown = function (event) {
-
         event.preventDefault();
-
     };
 
    $(document).keydown(function(event){ 
@@ -234,7 +231,7 @@
         piece.render(ctx);
         piece.move(ctx);
         if (piece.isCollided(fallingPiece)){
-          if (fallingPiece.direction = "down"){
+          if (fallingPiece.direction = "down"){ //handles sideways collisions
             fallingPiece.direction = "still"
           } else {
             fallingPiece.direction = "down"
