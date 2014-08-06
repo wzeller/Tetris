@@ -231,7 +231,7 @@
         for (j = 0; j < otherLength; j++){
           if (this.squares[i].isCollided(otherPiece.squares[j])){
             
-         
+            // debugger
               otherPiece.squares.forEach(function(square){
                 square.ypos -= 30;
               })
