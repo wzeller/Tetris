@@ -162,7 +162,7 @@
     window.onkeydown = function(event) {
         event.preventDefault();
     };
-   $(document).keydown(function(event) { 
+    $(document).keydown(function(event) { 
       switch(event.which) {
 
         case 37: // left
@@ -185,7 +185,6 @@
 
         default: return; // exit this handler for other keys
       }
-      // event.preventDefault();
     });
   };
 
@@ -205,7 +204,7 @@
       }
     })
     return collided;
-  }
+  };
 
   Game.prototype.checkIfLost = function(fallingPiece, gameInterval, ctx) {
    if (fallingPiece.direction == "still" && fallingPiece.top() <= 0) {

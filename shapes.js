@@ -5,11 +5,36 @@
     this.x = x;
     this.y = y;
     this.type = type;
-    this.squares = Shape[type](x, y);
+    this.squares = this.newSquares(x, y, type);
     this.pivot = this.squares[1];
     this.direction = "down";
     this.render(ctx);
     this.speed = "normal";
+  };
+  
+  //all the data to make each shape
+  var ShapeMatrix = {
+    "line":   [0, -30, 0, 30, 0, 30, 0, 30, "blue"],
+    "plus":   [0, 0, 30, 0, 30, 0, -30, 30, "red"],
+    "square": [0, 0, 30, 0, -30, 30, 30, 0, "yellow"],
+    "rightZ": [30, 0, -30, 0, 0, 30, -30, 0, "green"],
+    "leftZ":  [0, 0, 30, 0, 0, 30, 30, 0, "pink"],
+    "rightL": [0, 0, 30, 0, 30, 0, -60, 30, "orange"],
+    "leftL":  [0, 0, 30, 0, 30, 0, 0, 30, "purple"]
+  };
+
+  Shape.prototype.newSquares = function(x, y, type) {
+    var j = 0;
+    var squares = [];
+    var shapeMatrix = ShapeMatrix[type];
+    var color = shapeMatrix[shapeMatrix.length-1];
+    for(var i=0; i<4; i++) {
+      x += shapeMatrix[j];
+      y += shapeMatrix[j+1];
+      squares.push(new Tetris.Square(x, y, color));
+      j += 2;
+    };
+    return squares;
   };
 
   Shape.prototype.render = function(ctx) {
@@ -28,79 +53,7 @@
     var pieces = ["plus", "line", "square", "rightL", "leftL", "rightZ", "leftZ"]
     return pieces[Math.floor(Math.random() * pieces.length)];;
   };
-
-  Shape.line = function(x,y) {
-    y -= 30;
-    var squares = [];
-    for(var i=0; i<4; i++) {
-      squares.push(new Tetris.Square(x, y, "blue"));
-      y += 30;
-    };
-    return squares;
-  };
-
-  Shape.plus = function(x,y) {
-    var squares = [];
-    for(var i=0; i<3; i++) {
-      squares.push(new Tetris.Square(x, y, "red"))
-      x += 30
-    }
-    squares.push(new Tetris.Square(x-60, y+30, "red"))
-    return squares;
-  };
-
-  Shape.square = function(x,y) {
-    var squares = [];
-    for(var i=0; i<2; i++) {
-      squares.push(new Tetris.Square(x, y, "yellow"))
-      squares.push(new Tetris.Square(x+30, y, "yellow"))
-      y += 30;
-    };
-    return squares;
-  };
-
-  Shape.rightZ = function(x,y) {
-    var squares = [];
-    for(var i=0; i<2; i++) {
-      squares.push(new Tetris.Square(x+30, y, "green"))
-      squares.push(new Tetris.Square(x, y, "green"))
-      y += 30;
-      x -= 30;
-    }
-    return squares;
-  };
-
-  Shape.leftZ = function(x,y) {
-    var squares = [];
-    for(var i=0; i<2; i++) {
-      squares.push(new Tetris.Square(x, y, "pink"))
-      squares.push(new Tetris.Square(x+30, y, "pink"))
-      y += 30;
-      x += 30;
-    }
-    return squares;
-  };
-
-  Shape.rightL = function(x,y) {
-    var squares = [];
-    for(var i=0; i<3; i++) {
-      squares.push(new Tetris.Square(x, y, "orange"))
-      x += 30
-    }
-    squares.push(new Tetris.Square(x-90, y+30, "orange"))
-    return squares;
-  };
-
-  Shape.leftL = function(x,y) {
-    squares = [];
-    for(var i=0; i<3; i++) {
-      squares.push(new Tetris.Square(x, y, "purple"))
-      x += 30
-    }  
-    squares.push(new Tetris.Square(x-30, y+30, "purple"));
-    return squares;
-  };
-
+  
   Shape.prototype.onBottom = function() {
     var shape = this;
     var bottom = false;
