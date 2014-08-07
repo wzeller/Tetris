@@ -6,6 +6,15 @@
     this.ypos = ypos;
     this.color = color; 
   };
+  
+  Array.prototype.contains = function(k) {
+    for(var i=0; i < this.length; i++) {
+      if(this[i] == k){
+        return true;
+      }
+    }
+    return false;
+  };
 
   Square.prototype.render = function(ctx) {
     var square = this;
@@ -21,7 +30,7 @@
     ctx.stroke(); //draw gridlines on square 
   };
 
-  Square.prototype.dup = function(){
+  Square.prototype.dup = function() {
     var newXPos = this.xpos;
     var newYPos = this.ypos;
     var newColor = this.color;
@@ -30,10 +39,10 @@
   };
   
   //Adjustments for displaying next piece
-  Square.prototype.adjustForDisplay = function(board){
+  Square.prototype.adjustForDisplay = function(board) {
     this.xpos -= board.upperLeftx;
     this.ypos += board.height/2;
-    if (this.color == "blue"){
+    if (this.color == "blue") {
       this.ypos += board.squareWidth;
     }
     if (this.color !== "blue" && this.color !== "green") {
@@ -41,12 +50,16 @@
     } 
   };
 
-  Square.prototype.isCollided = function(otherSquare){
-    return (this.xpos == otherSquare.xpos && this.ypos == otherSquare.ypos);
-  };
-  
+  Square.prototype.isCollided = function(otherSquare) {
+    if (this.xpos == otherSquare.xpos && this.ypos == otherSquare.ypos) {
+      return true
+    } else {
+      return false 
+    }
+  };  
+
   //returns an array of all squares adjacent to a given square
-  Square.prototype.neighbors = function(game){
+  Square.prototype.neighbors = function(game) {
     var x = this.xpos;
     var y = this.ypos;
     //duplicate a two-d array with two arrays, one for x coords and one for y coords,
@@ -55,7 +68,7 @@
     var neighborYCoords = [y, y+30, y, y-30];
     var neighbors = [];
     //iterate through all squares; if they are potential neighbors, add to neighbors array 
-    game.allSquares().forEach(function(square){
+    game.allSquares().forEach(function(square) {
       var neighborx = square.xpos;
       var neighbory = square.ypos;
       var neighborxIndex = neighborXCoords.indexOf(neighborx); 
@@ -68,7 +81,7 @@
     //the first 1 is at index 0, and 4 is at index 1.  For this reason we use the last test,
     //as any pairs would either share one index or the other.
       if (neighborXCoords.contains(neighborx) && neighborYCoords.contains(neighbory) 
-        && ((neighborYCoords[neighborxIndex] == neighbory) || (neighborXCoords[neighboryIndex] == neighborx))){
+        && ((neighborYCoords[neighborxIndex] == neighbory) || (neighborXCoords[neighboryIndex] == neighborx))) {
           neighbors.push(square)
         }
     })
@@ -77,7 +90,7 @@
   
   //This function takes a square and returns true if it is an "island" -- i.e., part of a structure that is 
   //not connected on any side;  
-  Square.prototype.isIsland = function(game){
+  Square.prototype.isIsland = function(game) {
     var group = [];
     group.push(this); //This is a stack to use in DFS
     //encode each x and y coord to a unique value to store in blacklist and avoid repeating
