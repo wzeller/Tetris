@@ -42,11 +42,7 @@
   };
 
   Square.prototype.isCollided = function(otherSquare){
-    if (this.xpos == otherSquare.xpos && this.ypos == otherSquare.ypos) {
-      return true
-    } else {
-      return false 
-    }
+    return (this.xpos == otherSquare.xpos && this.ypos == otherSquare.ypos);
   };
   
   //returns an array of all squares adjacent to a given square
@@ -82,7 +78,8 @@
   //This function takes a square and returns true if it is an "island" -- i.e., part of a structure that is 
   //not connected on any side;  
   Square.prototype.isIsland = function(game){
-    var group = [this]; //This is a stack to use in DFS
+    var group = [];
+    group.push(this); //This is a stack to use in DFS
     //encode each x and y coord to a unique value to store in blacklist and avoid repeating
     var blacklist = [this.xpos * 1000 + this.ypos]
     while (group.length > 0) {
@@ -95,7 +92,7 @@
       //check against blacklist; if not on it, add to bl and to stack; if on it, do not; if
       //square touches bottom, change flag (end) to true, which will return false after loop is over
       neighbors.forEach(function(square){
-        var index = square.xpos * 1000 + square.ypos 
+        var index = square.xpos * 1000 + square.ypos; 
         if (square.ypos == 620) {
           end = true;
         }

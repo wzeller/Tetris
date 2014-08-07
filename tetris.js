@@ -7,6 +7,7 @@
     this.pieces = []
     this.totalRows = 0;
     this.level = 1;
+    this.interval = 300;
   };
 
   Game.prototype.isSquare = function(xpos, ypos){
@@ -63,7 +64,7 @@
     //count squares in each row and hash total
     squares.forEach(function(square){
       if (square.ypos > 50){
-        rowHash[square.ypos] = rowHash[square.ypos] + 1 
+        rowHash[square.ypos] += 1 
       }
     });
 
@@ -111,6 +112,7 @@
         
         //if there are islands, continue moving each down by 30 until collided or at bottom
         if (floaters == true){
+          debugger
           var collided = false; //flag to continue until island comes to rest
           while (collided == false){
             //move entire island first
@@ -120,14 +122,12 @@
             
             //then check if collided or at the bottom
             islands.forEach(function(square){
-              game.allSquares().forEach(function(othersquare){
-                //first make sure that the othersquare is not in the islands
-                if (islands.indexOf(othersquare) == -1){
-                  if (square.isCollided(othersquare) || square.ypos == 620){
-                    collided = true;
-                  }
-                }
-              })
+              if (square.isIsland(game) == false){
+                islands.remove(square);
+                collided = true;
+              } else {
+                collided = false;
+              }
             })
           }
           //after island has come to rest, recursively check for rows again to remove new rows
@@ -202,17 +202,67 @@
     });
   };
 
+  Game.prototype.renderPieces = function(fallingPiece, ctx){
+    this.pieces.forEach(function(piece){
+      piece.render(ctx);
+    })
+  };
+
+  Game.prototype.checkForCollisions = function(fallingPiece){
+    var collided = false;
+    this.pieces.forEach(function(piece){
+      if (piece.isCollided(fallingPiece)){
+        collided = true;
+        fallingPiece.direction = "down" ? fallingPiece.direction = "still" : 
+          fallingPiece.direction = "down" //handles sideways collisions
+      }
+    })
+    return collided;
+  }
+
+  Game.prototype.checkIfLost = function(fallingPiece, gameInterval, ctx){
+   if (fallingPiece.direction == "still" && fallingPiece.top() <= 0){
+      gameInterval.stop(); //terminates the game by ending variableInterval
+      var answer = confirm("Sorry... You lose.  Play again?")
+      if (answer){
+        window.location.reload();
+      } else {
+        ctx.fillStyle = "black";
+        ctx.textAlign = "center";
+        ctx.font = "bold 38px Helvetica"
+        ctx.fillText("Thanks for playing!", 400, 300)
+      }
+    }
+  };
+
+  Game.prototype.makeNewPiece = function(fallingPiece, fallingPieceArray, ctx){
+    $(document).unbind("keydown") //remove keybindings for old fallingpiece
+     fallingPieceArray.unshift(new Tetris.Shape(Tetris.Shape.randomPiece(), ctx, 400, -40, "down"))
+     fallingPiece = fallingPieceArray.pop();  
+     fallingPiece.speed = "normal";
+     this.pieces.push(fallingPiece);
+     return fallingPiece;
+  };
+
+  Game.prototype.updateScore = function(fallingPiece, totalRows){
+    var newRows = this.checkForRows(fallingPiece); //this checks for completed rows and returns 
+    totalRows += newRows;                          //the number of rows
+    if (totalRows / 10 >= this.level && totalRows != 0 && newRows != 0){
+      this.level += 1;
+      this.interval *= .9;
+    }
+    return totalRows;
+  };
+
   Game.prototype.start = function(canvasEl) {
-
+    //set up game and declare variables
     alert("Welcome to Tetris. Use the arrow keys to move around and the space bar to rotate the pieces.  Click ok to play!");
-
     var ctx = canvasEl.getContext("2d");
     var game = this;
     var board = new Tetris.Board(250, 50, 600, 300, game);
     var totalRows = game.totalRows; //completed rows
     var level = game.level;
-    var down = 0;  
-    var fallingPieceArray = [new Tetris.Shape(Tetris.Shape.randomPiece(), ctx, 400, -40, "down"), new Tetris.Shape(Tetris.Shape.randomPiece(), ctx, 400, -40, "down")]
+    var fallingPieceArray = [new Tetris.Shape(Tetris.Shape.randomPiece(), ctx, 400, -40), new Tetris.Shape(Tetris.Shape.randomPiece(), ctx, 400, -40)]
     var fallingPiece = fallingPieceArray.pop();
     game.pieces.push(fallingPiece);
     board.render(ctx);
@@ -220,58 +270,26 @@
     //loop that continues until the game is over; setVariableInterval is setInterval with 
     //the ability to change interval from within, which is used as levels increase
     var gameInterval = game.setVariableInterval(function () {
-      var newRows = 0;
-      var count = 0;
-      var interval = this.interval;
       board.render(ctx, totalRows, game.level, fallingPieceArray[0]);
       game.setKeyBindings(event, fallingPiece);
-
-      //move and render all pieces
-      game.pieces.forEach(function(piece){
-        piece.render(ctx);
-        piece.move(ctx);
-        if (piece.isCollided(fallingPiece)){
-          if (fallingPiece.direction = "down"){ //handles sideways collisions
-            fallingPiece.direction = "still"
-          } else {
-            fallingPiece.direction = "down"
-          }
-        }
-      })
-      
-      if (fallingPiece.direction == "still" && fallingPiece.top() <= 0){
-          gameInterval.stop(); //terminates the game by ending variableInterval
-          var answer = confirm("Sorry... You lose.  Play again?")
-          if (answer){
-            window.location.reload();
-          } else {
-            ctx.fillStyle = "black";
-            ctx.textAlign = "center";
-            ctx.font = "bold 38px Helvetica"
-            ctx.fillText("Thanks for playing!", 400, 300)
-          }
+      //move falling piece (twice if "fast") and render all pieces
+      fallingPiece.move();
+      if (fallingPiece.speed == "fast"){
+        var collided = game.checkForCollisions(fallingPiece);
+        if (collided == false) {fallingPiece.move()}; 
+        fallingPiece.speed = "normal";
       }
-
-      //makes new random piece when all pieces are stationary and checks for complete rows
+      game.checkForCollisions(fallingPiece);
+      game.renderPieces(fallingPiece, ctx);
+      game.checkIfLost(fallingPiece, gameInterval, ctx); //end game if lost
+      //make piece if falling piece at rest, check for completed rows, and update score
       if (fallingPiece.direction == "still"){ 
-         $(document).unbind("keydown") //remove keybindings for old fallingpiece
-         fallingPieceArray.unshift(new Tetris.Shape(Tetris.Shape.randomPiece(), ctx, 400, -40, "down"))
-         fallingPiece = fallingPieceArray.pop();  
-         fallingPiece.speed = "normal";
-         game.pieces.push(fallingPiece);
-         var turn = game.checkForRows(fallingPiece);
-         newRows = newRows + turn;
-         totalRows += newRows;
-         if (totalRows / 10 >= game.level && totalRows != 0 && newRows != 0){
-          game.level += 1;
-          interval *= .9
-         }
+         totalRows = game.updateScore(fallingPiece, totalRows); //check for completed rows and change score and interval
+         fallingPiece = game.makeNewPiece(fallingPiece, fallingPieceArray, ctx); 
       } 
-
-    return interval;
-
+    console.log(game.interval);
+    return game.interval;
     }, 300);
-
   }
 
 })(this);

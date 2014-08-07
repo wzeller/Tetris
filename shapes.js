@@ -128,13 +128,13 @@
       if (dir == "left"){
         square.xpos -= 30;
       }
-      if (shape.speed == "fast"){
-        square.ypos += 30;
-      }
+      // if (shape.speed == "fast"){
+      //   square.ypos += 30;
+      // }
       square.ypos += 30; 
     });
     shape.direction = "down"; //return to defaults after move is made
-    shape.speed = "normal";
+    // shape.speed = "normal";
   };
 
   //adjust pieces moving off the board and return a new direction

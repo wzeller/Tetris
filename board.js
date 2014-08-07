@@ -12,8 +12,7 @@
   };
 
   Board.prototype.renderGrid = function(ctx){
-    $('#myCanvas').css('background-color', 'rgba(158, 167, 184, 0.2)');
-    $('#myCanvas').css('background-image', 'imgres-4.jpg')
+    $('#myCanvas').css('background-color', 'rgba(255, 229, 204, 0.2)');
     ctx.clearRect(0, 0, this.gameWidth, this.gameLength);
     ctx.strokeRect(this.upperLeftx, this.upperLefty, this.width, this.height);
   };
