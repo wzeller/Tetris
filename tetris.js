@@ -89,6 +89,7 @@
         }
       })
     })
+
     if (floaters == false) { //no islands -- end the processing
       return false;
     }
@@ -124,8 +125,9 @@
     var isolatedPieces = true;
     var squares = game.allSquares();
     var completeRows = game.deleteCompletedRows();
-    while (game.testForIslands(fallingPiece)) { //loop continues until no islands remain
+    while (game.testForIslands(fallingPiece) == true) { //loop continues until no islands remain
       completeRows += game.deleteCompletedRows();
+      game.testForIslands(fallingPiece);
     }
     return completeRows;
   }; 
