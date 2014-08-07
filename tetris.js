@@ -30,7 +30,7 @@
     var pieces = this.pieces;
     var squares = this.allSquares();
     var rowHash = {};
-    var completeRows = 0;
+    var game = this;
     //set up blank hash for each row
     for (i = 620; i > 50; i -= 30) {
       rowHash[i] = 0;
@@ -43,10 +43,10 @@
       }
     });
 
-    //remove all rows with 10 elements in it
+    //remove all rows with 10 elements in it and increment score
     Object.keys(rowHash).forEach(function(key) {
       if (rowHash[key] >= 10) {
-        completeRows += 1;
+        game.totalRows += 1;
         //first, remove all squares in that row
         pieces.forEach(function(piece) {
           for (i = 0; i < 4; i++) {
@@ -65,7 +65,6 @@
         })
       }
     })
-    return completeRows;
   };
 
   Game.prototype.testForIslands = function(fallingPiece) {
@@ -74,7 +73,6 @@
     var islands = [];
     var floaters = false;//flag to tell whether there are any islands
     var fallingPieces = this.pieces;
-    var completedRows = 0;
     var game = this;
 
     //test each square for whether it's an island (and not the falling piece)
@@ -90,13 +88,10 @@
       })
     })
 
-    if (floaters == false) { //no islands -- end the processing
-      return false;
-    }
-  
     if (floaters == true) { //if islands exist, keep dropping them until they collide/hit bottom
-      var collided = false; //flag to continue until island comes to rest
-      while (collided == false) {
+      var rest = false; //flag to continue until island comes to rest
+      var adjust = false; //flag to keep track of islands that collide
+      while (rest == false) {
         //move entire island first
         islands.forEach(function(square) {
           square.ypos += 30;
@@ -108,28 +103,27 @@
             //first make sure that the othersquare is not in the islands array
             if (islands.indexOf(othersquare) == -1) {
               if (square.isCollided(othersquare) || square.ypos == 620) { 
-                collided = true;
+                rest = true;
               }
+              if (square.isCollided(othersquare)) {adjust = true;}
             }
           })
         })
+        if (adjust == true) { //if collided, move all pieces up one square
+          islands.forEach(function(square) {
+            square.ypos -= 30;
+          })
+        }
       }
-      return true;
+      game.deleteCompletedRows();       //delete any new rows that may have formed
+      game.testForIslands(fallingPiece); //recurse until all islands are at rest
     }
-  };
+  };                                   
   
   Game.prototype.checkForRows = function(fallingPiece) {
-    var total = 0;
     var game = this;
-    var isolatedPiecesArray = [];
-    var isolatedPieces = true;
-    var squares = game.allSquares();
-    var completeRows = game.deleteCompletedRows();
-    while (game.testForIslands(fallingPiece) == true) { //loop continues until no islands remain
-      completeRows += game.deleteCompletedRows();
-      game.testForIslands(fallingPiece);
-    }
-    return completeRows;
+    game.deleteCompletedRows();
+    game.testForIslands(fallingPiece);
   }; 
 
   //timer object that allows interval to be changed from within callback function;
@@ -191,7 +185,7 @@
 
         default: return; // exit this handler for other keys
       }
-      event.preventDefault();
+      // event.preventDefault();
     });
   };
 
@@ -237,14 +231,12 @@
      return fallingPiece;
   };
 
-  Game.prototype.updateScore = function(fallingPiece, totalRows) {
-    var newRows = this.checkForRows(fallingPiece); //this checks for completed rows and returns 
-    totalRows += newRows;                          //the number of rows
-    if (totalRows / 10 >= this.level && totalRows != 0 && newRows != 0) {
+  Game.prototype.updateScore = function(fallingPiece) {
+    this.checkForRows(fallingPiece); //this checks for completed rows and updates totalrows
+    if (this.totalRows / 10 >= this.level && this.totalRows != 0) {
       this.level += 1;
       this.interval *= .9;
     }
-    return totalRows;
   };
 
   Game.prototype.start = function(canvasEl) {
@@ -263,7 +255,7 @@
     //loop that continues until the game is over; setVariableInterval is setInterval with 
     //the ability to change interval from within, which is used as levels increase
     var gameInterval = game.setVariableInterval(function () {
-      board.render(ctx, totalRows, game.level, fallingPieceArray[0]);
+      board.render(ctx, game.totalRows, game.level, fallingPieceArray[0]);
       game.setKeyBindings(event, fallingPiece);
       //move falling piece (twice if "fast") and render all pieces
       fallingPiece.move();
@@ -277,7 +269,7 @@
       game.checkIfLost(fallingPiece, gameInterval, ctx); //end game if lost
       //make piece if falling piece at rest, check for completed rows, and update score
       if (fallingPiece.direction == "still") { 
-         totalRows = game.updateScore(fallingPiece, totalRows); //check for completed rows and change score and interval
+         game.updateScore(fallingPiece); //check for completed rows and change score and interval
          fallingPiece = game.makeNewPiece(fallingPiece, fallingPieceArray, ctx); 
       } 
     return game.interval;
