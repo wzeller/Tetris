@@ -5,8 +5,7 @@
     this.x = x;
     this.y = y;
     this.type = type;
-    this.orientation = "down";
-    this.squares = Shape[type](x, y, this.orientation);
+    this.squares = Shape[type](x, y);
     this.pivot = this.squares[1];
     this.direction = "down";
     this.render(ctx);
@@ -92,7 +91,7 @@
     return squares;
   };
 
-  Shape.leftL = function(x,y,orientation){
+  Shape.leftL = function(x,y){
     squares = [];
     for(var i=0; i<3; i++){
       squares.push(new Tetris.Square(x, y, "purple"))
@@ -102,82 +101,67 @@
     return squares;
   };
 
-  //makes adjustments when piece collided with the wall
-  Shape.prototype.moveOver = function(){
-    var min = 250;
-    var max = 520;
-    for(i=0; i<this.squares.length; i++){
-      if (this.squares[i].xpos < min){min = this.squares[i].xpos}
-      if (this.squares[i].xpos > max){max = this.squares[i].xpos}  
-    };
-     for(i=0; i<this.squares.length; i++){
-      if (this.squares[i].xpos <= 350){
-        this.squares[i].xpos += 250 - min;
-      } else {
-        this.squares[i].xpos -= max - 520;
+  Shape.prototype.onBottom = function(){
+    var shape = this;
+    var bottom = false;
+    var overlap = 0; //moves up if below the bottom
+    this.squares.forEach(function(square){
+      if (square.ypos >= 620){
+        overlap = square.ypos - 620;
+        shape.direction = "still";
+        bottom = true;
       }
-      this.direction = "down";
-     }
-   };
+      if (square.ypos >= 590 && shape.speed == "fast"){
+        shape.speed = "normal";
+      }
+    })
+    shape.squares.forEach(function(square){square.ypos -= overlap;})
+    return bottom;
+  };
+
+  Shape.prototype.makeMove = function(dir){
+    var shape = this;
+    shape.squares.forEach(function(square){
+      if (dir == "right"){
+        square.xpos += 30;
+      }
+      if (dir == "left"){
+        square.xpos -= 30;
+      }
+      if (shape.speed == "fast"){
+        square.ypos += 30;
+      }
+      square.ypos += 30; 
+    });
+    shape.direction = "down"; //return to defaults after move is made
+    shape.speed = "normal";
+  };
+
+  //adjust pieces moving off the board and return a new direction
+  Shape.prototype.offBoard = function(dir){
+    var shape = this;
+    var moveShape = false;
+    this.squares.forEach(function(square){
+      if ((square.xpos >= 520 && shape.direction == "right") || 
+        (square.xpos <= 250 && shape.direction == "left")){
+        dir = "down";
+      }
+      if (square.xpos >= 520 || square.xpos <= 250){
+        moveShape = true;
+      }
+    })
+    if (moveShape){shape.moveOver()}
+    return dir;
+  };
 
   Shape.prototype.move = function(ctx){
     var dir = this.direction;
-
-    if (this.squares.length == 0){
+    //check if empty, still, or on bottom and, if so, return null
+    if (this.squares.length == 0 || dir == "still" || this.onBottom()){
       return null;
     };
-
-    if (dir == "still"){
-      return this
-    };
-    
-    //check if on bottom
-    for(i=0; i<this.squares.length; i++){
-      if (this.squares[i].ypos >= 620){
-          this.direction = "still"
-          return false 
-        }
-      if (this.squares[i].ypos >= 590 && this.speed == "fast"){
-        this.speed = "normal";
-      }
-    }
-    
-    //check if on edges and moving off board
-    for(i=0; i<this.squares.length; i++){
-      if ((this.squares[i].xpos >= 520 && this.direction == "right") || 
-        (this.squares[i].xpos <= 250 && this.direction == "left")){
-        dir = "down";
-      }
-
-      if (this.squares[i].xpos >= 520){
-        this.moveOver()
-        break
-      }
-
-      if (this.squares[i].xpos <= 250){
-        this.moveOver()
-        break
-      }
-    }
-
-    for(i=0; i<this.squares.length; i++){
-      if (dir == "right"){
-        this.squares[i].xpos += 30
-        this.direction = "down"
-      }
-      if (dir == "left"){
-        this.squares[i].xpos -= 30
-        this.direction = "down"
-      }
-      if (dir == "down"){
-        this.squares[i].ypos += 30
-      }
-
-      if (this.speed == "fast"){
-        this.squares[i].ypos += 30
-      } 
-    }
-    this.speed = "normal";
+    dir = this.offBoard(dir); //check if on edges and moving off board
+    this.makeMove(dir);
   }; 
 
   Shape.prototype.top = function(){
@@ -190,10 +174,13 @@
     var pivot = this.pivot;
     var px = pivot.xpos;
     var py = pivot.ypos;
-    this.squares.forEach(function(square){
+    if (this.type == "square"){return 0}
+    this.squares.forEach(function(square){ //rotate 90 deg right about pivot
       if (square != pivot){
-        square.ypos = (square.xpos + py - px);
-        square.xpos = (px + py - square.ypos);
+        var x1 = square.xpos
+        var y1 = square.ypos
+        square.ypos = (x1 + py - px);
+        square.xpos = (px + py - y1);
       }
     })
   };
@@ -214,6 +201,7 @@
             collision = true;
             collided = true; 
             otherPiece.moveUp();
+            otherPiece.moveOver(); //in case piece is off the board
           }
         })
       }) 
@@ -225,4 +213,19 @@
     this.squares.forEach(function(square){square.ypos -= 30})
   };
   
+  //handles adjustments when collided with or over the wall
+  Shape.prototype.moveOver = function(){
+    var min = 250;
+    var max = 520;
+    this.squares.forEach(function(square){ //determine extent of overhang
+      if (square.xpos < min){min = square.xpos}
+      if (square.xpos > max){max = square.xpos}  
+    });
+    if (min !== 250 || max !== 520){ //make corrections if needed
+      this.squares.forEach(function(square){
+        square.xpos = square.xpos + (250 - min) - (max - 520);
+      })
+      this.direction = "down";
+    }
+  };
 })(this);
