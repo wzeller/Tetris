@@ -121,15 +121,15 @@
 
   Shape.prototype.flip = function() {
     var pivot = this.pivot;
-    var px = pivot.xpos;
-    var py = pivot.ypos;
+    var px = pivot.xpos; 
+    var py = pivot.ypos; 
     if (this.type == "square") {return 0;}
     this.squares.forEach(function(square) { //rotate 90 deg right about pivot
       if (square != pivot){
-        var x1 = square.xpos;
-        var y1 = square.ypos;
-        square.ypos = (x1 + py - px);
-        square.xpos = (px + py - y1);
+        var x1 = square.xpos; 
+        var y1 = square.ypos; 
+        square.ypos = (x1 + py - px); 
+        square.xpos = (px + py - y1); 
       }
     })
   };
@@ -149,8 +149,9 @@
           if (square.isCollided(thisSquare)) {
             collision = true;
             collided = true; 
-            otherPiece.moveUp();
-            otherPiece.moveOver(); //in case piece is off the board
+            if (otherPiece.direction == "down") {otherPiece.moveUp(); otherPiece.moveOver();}
+            if (otherPiece.direction == "right") { otherPiece.moveLeft(); otherPiece.moveOver(); otherPiece.direction = "down"; }
+            if (otherPiece.direction == "left") { otherPiece.moveRight(); otherPiece.moveOver(); otherPiece.direction = "down"; }
           }
         })
       }) 
@@ -160,6 +161,14 @@
 
   Shape.prototype.moveUp = function() {
     this.squares.forEach(function(square){square.ypos -= 30})
+  };
+
+  Shape.prototype.moveLeft = function() {
+    this.squares.forEach(function(square){square.xpos -= 30})
+  };
+
+  Shape.prototype.moveRight = function() {
+    this.squares.forEach(function(square){square.ypos += 30})
   };
   
   //handles adjustments when collided with or over the wall
