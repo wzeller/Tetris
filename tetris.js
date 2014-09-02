@@ -194,15 +194,21 @@
     })
   };
 
+  //TODO: at every step, checks for collisions
+  //      collsion checker 
   Game.prototype.checkForCollisions = function(fallingPiece) {
     var collided = false;
     this.pieces.forEach(function(piece) {
       if (piece.isCollided(fallingPiece)) {
-        collided = true;
-        fallingPiece.direction = "down" ? fallingPiece.direction = "still" : 
-          fallingPiece.direction = "down" //handles sideways collisions
-      }
+        if (fallingPiece.direction == "down"){
+          collided = true;
+          fallingPiece.direction = "still";
+        } else {
+          fallingPiece.direction = "down";
+        }
+      } 
     })
+    if (collided == false && fallingPiece.onBottom() == false) {fallingPiece.direction = "down";}
     return collided;
   };
 
@@ -238,7 +244,7 @@
     }
   };
 
-  Game.prototype.start = function(canvasEl) {
+  Game.prototype.start = function(canvasEl, event) {
     //set up game and declare variables
     alert("Welcome to Tetris. Use the arrow keys to move around and the space bar to rotate the pieces.  Click ok to play!");
     var ctx = canvasEl.getContext("2d");

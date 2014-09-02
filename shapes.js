@@ -83,7 +83,7 @@
       }
       square.ypos += 30; 
     });
-    shape.direction = "down"; //return to defaults after move is made
+
   };
 
   //adjust pieces moving off the board and return a new direction
@@ -134,6 +134,7 @@
     })
   };
 
+//todo fix correction if also collided below -- possibly make method (is y collided)
   Shape.prototype.isCollided = function(otherPiece) {
     var thisPiece = this;
     var collision = true; //flag for loop
@@ -150,11 +151,12 @@
             collision = true;
             collided = true; 
             if (otherPiece.direction == "down") {otherPiece.moveUp(); otherPiece.moveOver();}
-            if (otherPiece.direction == "right") { otherPiece.moveLeft(); otherPiece.moveOver(); otherPiece.direction = "down"; }
-            if (otherPiece.direction == "left") { otherPiece.moveRight(); otherPiece.moveOver(); otherPiece.direction = "down"; }
+            if (otherPiece.direction == "right") { otherPiece.moveLeft(); otherPiece.moveOver();}
+            if (otherPiece.direction == "left") { otherPiece.moveRight(); otherPiece.moveOver();}
           }
         })
       }) 
+      // otherPiece.direction = "down";
     }
     return collided;
   };
@@ -168,7 +170,7 @@
   };
 
   Shape.prototype.moveRight = function() {
-    this.squares.forEach(function(square){square.ypos += 30})
+    this.squares.forEach(function(square){square.xpos += 30})
   };
   
   //handles adjustments when collided with or over the wall
